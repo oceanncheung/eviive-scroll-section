@@ -94,10 +94,13 @@ function Backdrop() {
 
             vec3 navy     = s2l(vec3(0.008, 0.173, 0.231));  // #022C3B exactly
             vec3 navyDeep = s2l(vec3(0.004, 0.110, 0.153));   // deepest at the centre
-            vec3 dark = mix(navyDeep, navy, smoothstep(0.15, 1.0, rad));
+            vec3 dark = mix(navy, navyDeep, smoothstep(0.15, 1.0, rad));
 
-            vec3 liteC = s2l(vec3(0.784, 0.898, 0.945));      // light blue in the centre
-            vec3 liteE = s2l(vec3(0.961, 0.988, 1.000));      // #F5FCFF Light Tone out
+            /* Back the right way round: a lightbox is BRIGHTEST at the centre
+               and cools toward the edges. Swapping it put the weight in the
+               wrong place — an x-ray plate is lit from behind the middle. */
+            vec3 liteC = s2l(vec3(0.980, 0.995, 1.000));      // near-white core
+            vec3 liteE = s2l(vec3(0.741, 0.869, 0.929));      // cooler, deeper out
             vec3 lite = mix(liteC, liteE, smoothstep(0.10, 1.0, rad));
 
             vec3 c = mix(dark, lite, uLift);
@@ -215,9 +218,21 @@ const FRAG_MORPH = ORB_HEAD + `
   void main(){
     float m = uMorph;
     vec3  N = normalize(vN), V = normalize(vV);
-    vec3  L = normalize(vec3(-0.34 + sin(uT * 0.09) * 0.18, 0.80, 0.52));
+    /* The key light tracks the BACKGROUND's own drift. These are the same two
+       expressions the backdrop uses to wander its gradient centre, so the arc
+       of the rim that brightens is always the arc facing the brightest part of
+       the field. Before, the light drifted on its own unrelated period and the
+       body and its ground looked like two separate things. */
+    vec2  bgCtr = vec2(sin(uT * 0.039) * 0.17, cos(uT * 0.029) * 0.13);
+    vec3  L = normalize(vec3(bgCtr.x * 3.6 - 0.22, bgCtr.y * 3.6 + 0.76, 0.52));
     float thick = pow(ndv(), 0.70);
     float nuc = nucleus();
+    /* Where this point sits relative to the light, 0 (facing away) to 1
+       (facing it). At the silhouette N lies in the screen plane, so this
+       sweeps smoothly around the whole circumference with no seam. */
+    float rimA = dot(N, L) * 0.5 + 0.5;
+    float rimW = smoothstep(0.02, 0.98, rimA);
+
 
     // the palette itself moves; nothing is blended against anything else
     vec3 pDeep  = mix(vec3(0.22,0.26,0.30), EDGE, m);
@@ -239,8 +254,16 @@ const FRAG_MORPH = ORB_HEAD + `
     float shell = smoothstep(0.05, 0.95, dot(Ni, L)) * thick;
     base = mix(base, pLight, shell * 0.30 * m);
 
-    float bandDrift = 0.13 + sin(uT * 0.094) * 0.035;
-    base = mix(base, pDeep, band(bandDrift, bandDrift + 0.29) * 0.85 * m);
+    /* THIS is the continuous unvarying trim. It is a ring at a fixed ndv
+       range, so it had the same weight at every point of the circumference —
+       the thing that stopped it reading as refracted light. Widened for a
+       gentler gradient into the fill, weakened, and now modulated by the light
+       so it nearly disappears on the lit arc and carries the whole dark side.
+       Adding a SECOND darkening term on top of this was why every attempt came
+       out "too thin, too strong": two edges stacked at the same silhouette. */
+    float bandDrift = 0.10 + sin(uT * 0.094) * 0.035;
+    base = mix(base, pDeep,
+               band(bandDrift, bandDrift + 0.52) * 0.62 * m * mix(0.22, 1.0, 1.0 - rimW));
     // a density INSIDE the body, not a mark on the front of it
     /* The inner core, readable again. Softened to kill a hard-edged stain I
        took it far too far — at 0.55x0.34 it could reach only 19% toward the
@@ -250,10 +273,21 @@ const FRAG_MORPH = ORB_HEAD + `
 
     vec3  Hv = normalize(L + V);
     float trim = (1.25 + sin(uT * 0.137) * 0.16) * m;
+
+    /* The rim must not be ONE uniform ring. fres() is radially symmetric — it
+       has no idea where the light is, so it returns the same value at every
+       point on the circumference and the trim reads as a drawn outline rather
+       than a refracted edge. Real glass gathers light on the side facing the
+       source and accumulates material on the far side.
+       At the silhouette N lies in the screen plane, so dot(N, L) sweeps
+       smoothly from -1 to +1 around the circle — one continuous gradient from
+       the bright arc to the dark one, no seam. And because L already drifts on
+       sin(uT * 0.09), the bright arc travels slowly around the body. */
     vec3  c = base
-            + vec3(0.80,0.95,1.00) * fres(3.0) * trim
+            + vec3(0.80,0.95,1.00) * fres(3.0) * trim * mix(0.62, 1.0, rimW)
             + vec3(0.86,0.96,1.00) * pow(max(dot(N, Hv), 0.0),  5.0) * 0.14 * thick * m
             + vec3(1.00,1.00,1.00) * pow(max(dot(N, Hv), 0.0), 44.0) * 0.20 * m;
+
 
     // the alpha PROFILE travels too: a thin shell opening into a glass body
     float aThin  = mix(0.14, 0.60, fres(1.7));
@@ -403,7 +437,7 @@ function Rig({ dof, vignette }) {
     }
     if (vignette.current) {
       // barely there — a strong vignette was reading as the background's shape
-      vignette.current.darkness = lerp(0.24, 0.12, smoothstep(0.58, 0.96, p))
+      vignette.current.darkness = lerp(0.30, 0.26, smoothstep(0.58, 0.96, p))
     }
   })
   return null
@@ -425,7 +459,7 @@ function Scene() {
         <DepthOfField ref={dof} worldFocusDistance={6.4} worldFocusRange={1.8} bokehScale={5.5} height={640} />
         <Bloom mipmapBlur luminanceThreshold={0.95} luminanceSmoothing={0.3} intensity={0.55} />
         <Noise opacity={0.075} blendFunction={BlendFunction.OVERLAY} />
-        <Vignette ref={vignette} eskil={false} offset={0.42} darkness={0.24} />
+        <Vignette ref={vignette} eskil={false} offset={0.30} darkness={0.30} />
       </EffectComposer>
     </>
   )

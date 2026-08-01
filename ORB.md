@@ -84,10 +84,44 @@ float shell = smoothstep(0.05, 0.95, dot(Ni, L)) * thick;
 This is the single most important term for reading as glass. A body with one
 boundary is a skin; two boundaries is a volume.
 
-**4. The dark band.** A narrow ring near the silhouette, drifting:
-`band(0.13 ± 0.035, +0.29) * 0.85 * m`. Part of A01's identity. It is specified
-against `ndv()`, not screen radius — an earlier version used `1 - dot(N,V)` and
-was invisible, because that only exceeds 0.42 in the outer 17% of the disc.
+**4. The dark band — the trim.** A ring near the silhouette, drifting, and
+**modulated by the light**:
+
+```glsl
+float rimA = dot(N, L) * 0.5 + 0.5;        // 0 facing away .. 1 facing the light
+float rimW = smoothstep(0.02, 0.98, rimA); // sweeps the whole circumference, no seam
+base = mix(base, pDeep,
+           band(bandDrift, bandDrift + 0.52) * 0.62 * m * mix(0.22, 1.0, 1.0 - rimW));
+```
+
+This is **the** trim. There is exactly one, and it must stay that way.
+
+Originally it was `band(..., +0.29) * 0.85` with no light term — a ring of
+identical weight at every point of the circumference, which is what stopped it
+reading as a refracted edge rather than a drawn outline. Widened (`+0.52`) so it
+grades gently into the fill, weakened (`0.62`), and multiplied by the light so it
+nearly vanishes on the lit arc and carries the whole dark side.
+
+**Do not add a second darkening term at the silhouette.** Several attempts
+layered an extra `fres()`-driven rim on top of this one; every result read as
+"too thin and too strong" because two edges were stacking at the same place.
+Adjust `band`'s width, weight, or the `0.22` floor — never add another.
+
+It is specified against `ndv()`, not screen radius — an earlier version used
+`1 - dot(N,V)` and was invisible, because that only exceeds 0.42 in the outer
+17% of the disc.
+
+**The key light follows the background.** `L` is built from the same two
+expressions the backdrop uses to drift its gradient centre:
+
+```glsl
+vec2 bgCtr = vec2(sin(uT * 0.039) * 0.17, cos(uT * 0.029) * 0.13);
+vec3 L = normalize(vec3(bgCtr.x * 3.6 - 0.22, bgCtr.y * 3.6 + 0.76, 0.52));
+```
+
+So the arc that brightens is always the arc facing the brightest part of the
+field. Before, the light drifted on its own unrelated period and the body and
+its ground looked like two separate things.
 
 **5. Nucleus.** A soft core suspended inside, drifting on two detuned periods:
 
@@ -110,8 +144,14 @@ pow(dot(N,Hv),  5.0) * 0.14 * thick * m      // frosted scatter
 pow(dot(N,Hv), 44.0) * 0.20 * m              // glassy point
 ```
 
-**7. Rim trim.** `fres(3.0) * (1.25 + sin(uT*0.137)*0.16) * m`.
-**Sensitive.** A stronger trim has been rejected twice. Leave it.
+**7. Bright trim.** `fres(3.0) * (1.25 + sin(uT*0.137)*0.16) * m * mix(0.62, 1.0, rimW)`.
+
+**Sensitive** — a stronger trim has been rejected twice. Leave the `1.25`.
+
+The `mix(0.62, 1.0, rimW)` floor matters: an earlier version multiplied by
+`rimW` outright, which drove the bright trim to zero on the far side. That is a
+switch between "trim" and "no trim", not a gradient. Floored, the trim exists
+all the way round and only varies in strength.
 
 **8. Alpha profile travels too** — a thin shell opening into a glass body:
 
@@ -156,8 +196,13 @@ lobes, smoothed at ~0.5s. It leans on the field rather than steering it.
 
 | want | change |
 |---|---|
+| dark trim heavier / lighter | `0.62` on the `band(...)` line |
+| dark trim wider / thinner | `+ 0.52` inside `band(bandDrift, ...)` |
+| more / less contrast around the circumference | the `0.22` floor in `mix(0.22, 1.0, 1.0 - rimW)` |
+| bright trim strength | `1.25` in `trim` — **rejected twice when raised** |
 | nucleus more/less visible | `nuc * 0.62` in `FRAG_MORPH` |
-| rim trim strength | `1.25` in `trim` — **rejected twice when raised** |
 | white less filled | `mix(1.0, 0.50, g)` in `aGlass` |
 | more/less surface motion | `uWobAmp` / `uOrganic` in `Orb`'s `useFrame` |
 | glass terms arrive sooner | `smoothstep(0.10, 0.82, t)` in `orbAt` |
+
+**Never** answer a trim complaint by adding a term. There is one trim; tune it.

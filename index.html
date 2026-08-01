@@ -531,7 +531,11 @@ aligned patients</span>
     MARKS.forEach((mk, i) => {
       const y = headY + (mk.m - months) * pxPerMonth
       const e = markEls[i], sp = e.lastElementChild
-      const edge = Math.min(smoothstep(-60, 20, y), 1 - smoothstep(H - 20, H + 60, y))
+      /* It used to stay legible almost to the very bottom edge, so it climbed
+         into place from behind the caption. It now begins resolving well above
+         that, and the blur is deeper so the arrival reads as blur-to-clear
+         rather than as a fade. */
+      const edge = Math.min(smoothstep(-60, 20, y), 1 - smoothstep(H * 0.56, H * 0.78, y))
       const o = fade[i] * edge
       e.style.display = o > 0.004 ? "block" : "none"
       if (o <= 0.004) return
@@ -550,7 +554,7 @@ aligned patients</span>
       sp.style.transform = `translate3d(${(-reach).toFixed(1)}px,-50%,0)`
       e.style.opacity = o.toFixed(3)
       // blur-to-clear on arrival, the way Framer reveals text
-      sp.style.filter = o > 0.995 ? "none" : `blur(${((1 - o) * BLUR).toFixed(2)}px)`
+      sp.style.filter = o > 0.995 ? "none" : `blur(${((1 - o) * 20).toFixed(2)}px)`
     })
     /* Reversed: month zero sits at the TOP and time runs downward, so as the
        count climbs every tick travels UP and out. The marks therefore rise

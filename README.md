@@ -8,7 +8,8 @@ Scroll-driven WebGL section visualising the clinical finding:
 > Not aligned: **6.4 months**.
 
 ## Status
-`golden/eviive-section-v1.0-desktop.html` — desktop, signed off.
+`golden/eviive-section-v1.1-desktop.html` — desktop, signed off (current).
+`golden/eviive-section-v1.0-desktop.html` — previous, kept for reference.
 Self-contained: bundle + fonts inlined, opens with a double-click.
 
 ## Build
