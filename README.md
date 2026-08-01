@@ -25,5 +25,8 @@ node ../package.js     # inline bundle + fonts → single html
   tick rail, captions. Plain JS, no framework.
 - 1 world unit = 1 month, so the geometry *is* the data at the true 8.36x ratio.
 
-## Non-obvious decisions
-See `NOTES.md` — several of these look wrong until you know why.
+## Documentation
+- `ORB.md` — how the EVIIVE orb is made: provenance, palette, every shading
+  layer, and which parameters are sensitive. Read before touching the material.
+- `NOTES.md` — non-obvious decisions across the whole section. Several look
+  wrong until you know why.
