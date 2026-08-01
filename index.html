@@ -1141,15 +1141,34 @@ aligned patients</span>
   const DUR=2600;   // long enough for the acceleration itself to be legible
   let target=0, from=0, t0=-1e9;
 
+  const ENTER_AT = 0.75;   /* intro is finished this far into the approach */
+
   function readScroll(){
     const r = pin.getBoundingClientRect();
     const travel = r.height - innerHeight;
+
+    /* APPROACH. While the section is still rising into view its top is below
+       the fold, raw would clamp to 0, and the composition sat frozen on 6.4
+       until you scrolled again — the section felt dead on arrival. Instead the
+       approach drives progress 0 -> 0.5 directly, so the odometer counts up to
+       6.4 and the orb settles while the section is still coming up, and it has
+       finished by ENTER_AT of the way in. This is scrubbed, not tweened: the
+       tween belongs to the deliberate step between states, whereas here the
+       scroll IS the timeline, so `from` is pinned to the target to make the
+       easing a no-op. */
+    if (r.top > 0){
+      const enter = clamp(1 - r.top / innerHeight, 0, 1);
+      target = from = scroll.p = clamp(enter / ENTER_AT, 0, 1) * 0.5;
+      t0 = -1e9;
+      return;
+    }
+
     const raw = travel > 0 ? clamp(-r.top / travel, 0, 1) : 0;
     /* There are exactly three states, so quantise to them. Tracking the raw
        scroll meant every event during the browser's own snap animation reset
        `from` and `t0` — the tween restarted dozens of times on the way to one
        state, which is the stutter. Quantised, the target changes once. */
-    const q = Math.round(raw * 2) / 2;               // 0, 0.5, 1
+    const q = 0.5 + Math.round(raw) / 2;             // 0.5 or 1 — two states
     if (q !== target){ from = scroll.p; target = q; t0 = performance.now(); }
   }
   alignUnit(); layoutStagger();

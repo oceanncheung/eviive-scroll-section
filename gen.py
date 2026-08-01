@@ -330,14 +330,6 @@ def main():
     if unresolved:
         sys.exit(f"no CDN mapping for: {unresolved}")
 
-    # Enter at scene 2. The prototype opened on a blurred intro dot (p=0) that
-    # cost a whole scroll. Progress now spans only the two states that carry the
-    # finding: 6.4 months (p=0.5) to 53.5 months (p=1).
-    old_target = "o=Math.round(t*2)/2"
-    if old_target not in driver_min:
-        sys.exit("progress quantiser not found - driver shape changed")
-    driver_min = driver_min.replace(old_target, "o=.5+Math.round(t)/2", 1)
-
     scene = retarget_js_viewport(scene, "scene")
 
     tsx = TEMPLATE.format(
