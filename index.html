@@ -1,0 +1,948 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EVIIVE — Therapy Alignment · Interactive Section Sandbox</title>
+<style>
+@font-face{font-family:"Inter";src:url(data:font/ttf;base64,__INTER_B64__) format("truetype");font-weight:100 900;font-style:normal;font-display:block}
+@font-face{font-family:"JetBrains Mono";src:url(data:font/ttf;base64,__JBM_B64__) format("truetype");font-weight:400;font-style:normal;font-display:block}
+
+:root{
+  --dark:#022C3B;                 /* /Dark Tone      */
+  --white:#FFFFFF;                /* /White          */
+  --electric:#67EAFF;             /* /Highlight Tone */
+  /* Framer's real container: every Container node in the project is
+     maxWidth 1512px with 24px side padding, centred. A flat 96px gutter is
+     not that at any width — it is too wide below 1512 and it keeps growing
+     above it instead of pinning the content to a 1512 column. */
+  --gutter:max(24px, calc((100vw - 1512px) / 2 + 24px));
+  --s12:12px; --s16:16px; --s48:48px; --s96:96px;
+  /* Framer's section frames are padding: 48px 0 96px 0 — the top inset is
+     HALF the bottom one, not equal to it. */
+  --pad-t:48px; --pad-b:96px;
+  --f-display-mono:102px; --f-h2:51px; --f-h3:40px; --f-h4:25px;
+  --f-small:14px; --f-mini:12px;
+  /* driven from JS as the ground lifts from navy to white */
+  --ink:rgba(255,255,255,.96);
+  --soft:rgba(248,246,242,.42);
+  --accent:#67EAFF;
+  --ghost:rgba(248,246,242,.22);
+}
+*{box-sizing:border-box}
+html{background:var(--dark);scroll-snap-type:y mandatory}
+body{margin:0;background:var(--dark);font-family:"Inter",system-ui,sans-serif;
+  line-height:1.5;-webkit-font-smoothing:antialiased}
+
+.pin{position:relative;height:300vh}
+.snap{position:absolute;left:0;width:100%;height:100vh;
+  scroll-snap-align:start;scroll-snap-stop:always;pointer-events:none}
+.snap.a{top:0}
+.snap.b{top:100vh}
+.snap.c{top:200vh}
+.sticky{position:sticky;top:0;height:100vh;overflow:hidden;background:var(--dark)}
+
+#scene{position:absolute;inset:0}
+#scene canvas{display:block}
+
+.ui{position:absolute;inset:0;pointer-events:none;opacity:0}
+
+.headline{position:absolute;left:var(--gutter);top:var(--pad-t);margin:0;
+  font-size:var(--f-h2);line-height:1.18;letter-spacing:-.03em;font-weight:400;
+  color:var(--ink);max-width:17ch}
+/* Nothing is pre-printed in grey. Every line arrives the way Framer reveals
+   text: word by word, rising a little and resolving out of blur. */
+.headline .ln{display:block;white-space:pre-wrap}
+/* Scene 2's title must leave while scene 3's reveals in the SAME place. Out
+   of flow, so the moment it display:nones nothing under it can reflow — in
+   flow, the incoming title revealed 120px too low and then snapped up the
+   instant this line vanished, which is the "stutter" that kept being seen.
+   width:max-content because the h2 shrink-wraps to zero while every in-flow
+   line of it is hidden. */
+.headline #l1a{position:absolute;left:0;top:0;width:max-content;max-width:17ch}
+/* The payoff line carries the brand accent — it is the claim, not narration. */
+.headline #line2{color:var(--accent)}
+.headline .wd{display:inline-block;white-space:pre}
+.headline .wd b{display:inline-block;font-weight:inherit;
+  will-change:transform,filter,opacity}
+
+.readout{position:absolute;left:var(--gutter);bottom:var(--pad-b);text-align:left;
+  display:flex;flex-direction:column;align-items:flex-start}
+/* "months" sits beside the figure on the DIGIT baseline. The digit column is
+   1.55em tall with the live glyph in the middle 1em, and the two faces have
+   different metrics, so no CSS ratio lands it — the offset is measured from
+   the rendered baselines instead (alignUnit). */
+.odo-row{display:flex;align-items:flex-start;justify-content:flex-start;gap:16px;
+  margin-bottom:calc(var(--f-display-mono) * -0.275)}
+.odo-unit{font-size:var(--f-h3);line-height:1;color:var(--ink);letter-spacing:-.02em;
+  align-self:flex-start}
+.readout .unit{margin-top:6px;font-size:var(--f-h4);line-height:1.4;
+  color:var(--soft);letter-spacing:-.02em}
+/* A leader line out of the dot, with the sentence set larger at the end of it,
+   sitting on the dot's own centre line. */
+/* The leader runs out of the RAIL toward the orb, and the sentence sits at the
+   rail end of it so it can never sit on top of the orb. */
+
+
+.odo{display:flex;justify-content:flex-start;align-items:flex-start;
+  font-family:"JetBrains Mono",monospace;font-size:var(--f-display-mono);
+  line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}
+/* The window is always exactly one digit tall (1em of 1.55em, centred) so no
+   neighbouring digit can ever be left showing. Its EDGE SOFTNESS is a variable
+   driven per-frame from the wheel's own speed: soft while spinning, hard at
+   rest. Toggling between two masks snapped the residual away visibly — a
+   continuous variable never can. */
+.odo-col{height:1.55em;overflow:hidden;width:.60em;--eat:0%;--fade:2.4%;
+  -webkit-mask-image:linear-gradient(180deg,
+    transparent calc(17.7% + var(--eat) - var(--fade)),
+    #000        calc(17.7% + var(--eat) + var(--fade)),
+    #000        calc(82.3% - var(--eat) - var(--fade)),
+    transparent calc(82.3% - var(--eat) + var(--fade)));
+  mask-image:linear-gradient(180deg,
+    transparent calc(17.7% + var(--eat) - var(--fade)),
+    #000        calc(17.7% + var(--eat) + var(--fade)),
+    #000        calc(82.3% - var(--eat) - var(--fade)),
+    transparent calc(82.3% - var(--eat) + var(--fade)))}
+.odo-col .stack{will-change:transform,filter}
+.odo-col i{display:block;height:1em;font-style:normal;text-align:center;letter-spacing:-.02em}
+.odo-pt{width:.34em;height:1.55em;display:flex;align-items:center;justify-content:center}
+
+/* The timeline as a vertical rule of ticks on the right. As DOM it can never
+   be touched by depth of field — which is what kept making the 3D version read
+   as a prominent blurred smudge no matter how thin the geometry got. */
+/* The rail is a SCALE, not a fixed ladder. Month 0 sits at the bottom and the
+   current month is pinned to the centre line, so as the range grows from 6.4
+   to 53.5 the same span of screen has to hold eight times as much time — the
+   gaps compress on their own. The squeeze IS the story. */
+/* `contain` plus transform-only updates. Writing top/width on eighty ticks a
+   frame dirties layout INSIDE a scroll-snap:mandatory container, so Chrome
+   re-evaluates snapping every frame and starts fighting itself — the page
+   emits scroll events and drifts with no input, and nothing downstream can
+   ever settle. Everything below animates on the compositor only. */
+/* The RAIL's box is symmetric about the orb even though the type follows
+   Framer's 48/96. Month zero at the top, the head on the orb's centre line and
+   a flush foot can only all hold when headY/H is a clean fraction: at 48/96 it
+   is 402/756 = 0.5317 and no whole number of ticks reaches the foot, which is
+   why the bottom line disappeared at scene 2. At 96/96 it is exactly 0.5. */
+.rail{position:absolute;right:var(--gutter);top:var(--pad-b);bottom:var(--pad-b);width:120px;
+  contain:layout style}   /* NOT paint — that clips the leader labels away */
+.rail i{position:absolute;right:0;top:0;display:block;height:1px;width:64px;
+  background:var(--soft);font-style:normal;transform-origin:100% 50%;
+  will-change:transform}
+/* Each sentence is pinned to ITS OWN MONTH on the scale — "not aligned" to
+   6.4, "aligned" to 53.5 — and positioned by the same function as the ticks.
+   So when the scale compresses, 6.4 slides down the rail and takes its label
+   with it. Pinning a single head to the centre could never scroll, because
+   the centre is the one place on the rail that never moves. */
+.rail i.mark{width:0;height:1px;background:none}
+.rail i.mark b{position:absolute;right:0;top:0;display:block;height:1px;width:300px;
+  background:var(--ink);transform-origin:100% 50%;will-change:transform}
+.rail i.mark span{position:absolute;right:0;top:50%;
+  white-space:nowrap;font-style:normal;font-size:var(--f-h4);line-height:1.4;
+  letter-spacing:-.02em;color:var(--ink);will-change:transform,filter,opacity}
+
+.caption{position:absolute;right:calc(var(--gutter) + 52px);bottom:var(--pad-b);margin:0;max-width:74ch;text-align:right;
+  font-size:11px;line-height:1.55;color:var(--soft);opacity:0;will-change:opacity}
+
+.cue{position:absolute;left:50%;bottom:var(--s48);width:1px;height:44px;
+  transform:translateX(-50%);overflow:hidden;will-change:opacity}
+.cue i{position:absolute;inset:0;font-style:normal;
+  background:linear-gradient(transparent,var(--soft),transparent);
+  animation:cueRun 2.6s cubic-bezier(.4,0,.2,1) infinite}
+@keyframes cueRun{0%{transform:translateY(-100%)}100%{transform:translateY(100%)}}
+
+.next{position:relative;height:100vh;background:var(--white);scroll-snap-align:start}
+.next .inner{padding:var(--s96) var(--gutter);color:#0B2028}
+.next h3{margin:0 0 var(--s16);font-size:var(--f-h4);font-weight:500;letter-spacing:-.025em}
+.next p{margin:0;font-size:var(--f-small);color:rgba(11,32,40,.5);max-width:52ch}
+
+.hud{position:fixed;right:14px;bottom:14px;z-index:50;display:none;
+  font-family:"JetBrains Mono",monospace;font-size:11px;line-height:1.7;color:#9fb;
+  background:rgba(1,22,30,.88);border:1px solid rgba(255,255,255,.18);
+  padding:10px 12px;white-space:pre;pointer-events:none}
+.hud.on{display:block}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-snap-type:none}
+  .pin{height:100vh}
+  .cue{display:none}
+  .headline .ltr{--f:100%}
+  .caption{opacity:1}
+}
+@media (max-width:1280px){:root{--f-display-mono:84px;--f-h2:44px;--f-h3:32px}}
+</style>
+</head>
+<body>
+
+<section class="pin" id="pin">
+  <div class="snap a"></div>
+  <div class="snap b"></div>
+  <div class="snap c"></div>
+
+  <div class="sticky">
+    <div id="scene"></div>
+
+    <div class="ui" id="ui">
+      <h2 class="headline">
+        <span class="ln" id="l1a">Therapy-not
+aligned patients</span>
+        <span class="ln" id="l1b">Therapy-aligned patients</span>
+        <span class="ln" id="line2">stay progression-free nearly 4 years longer</span>
+      </h2>
+
+      <div class="readout">
+        <div class="odo-row">
+          <div class="odo" id="odo"></div>
+          <div class="odo-unit" id="odounit">months</div>
+        </div>
+        <div class="unit">median progression-free survival</div>
+
+      </div>
+
+      <div class="rail" id="rail"></div>
+
+      <p class="caption" id="caption">124 first-line metastatic melanoma patients treated with
+        anti-PD-1 monotherapy or anti-PD-1 + anti-CTLA-4 combination therapy. 85 patients (69%)
+        covered by the platform's prediction cut-offs.</p>
+
+      <div class="cue" id="cue"><i></i></div>
+    </div>
+  </div>
+</section>
+
+<section class="next">
+  <div class="inner"><h3>Next section</h3><p>Intentionally blank.</p></div>
+</section>
+
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <filter id="mb-tens"   x="-25%" y="-70%" width="150%" height="240%"><feGaussianBlur id="fe-tens"   stdDeviation="0 0"/></filter>
+  <filter id="mb-ones"   x="-25%" y="-70%" width="150%" height="240%"><feGaussianBlur id="fe-ones"   stdDeviation="0 0"/></filter>
+  <filter id="mb-tenths" x="-25%" y="-70%" width="150%" height="240%"><feGaussianBlur id="fe-tenths" stdDeviation="0 0"/></filter>
+</svg>
+
+<div class="hud" id="hud"></div>
+
+<script>
+/* ===========================================================================
+   Scroll driver + DOM overlay. Writes the final eased progress to
+   window.__eviiveScroll.p, which the R3F scene reads directly in useFrame —
+   the easing lives here, once, and is never applied twice.
+   ========================================================================= */
+(() => {
+  "use strict";
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  const smoothstep=(e0,e1,x)=>{const t=clamp((x-e0)/(e1-e0),0,1);return t*t*(3-2*t)};
+
+  const PFS_A = 6.4, PFS_B = 53.5;
+  const scroll = (window.__eviiveScroll = window.__eviiveScroll || { p: 0 });
+  /* Raw pointer, normalised to [-1,1]. The scene smooths it — the inertia
+     belongs next to the thing that moves, not next to the input. */
+  scroll.mx = scroll.my = 0;
+  addEventListener("pointermove", ev => {
+    scroll.mx = (ev.clientX / innerWidth) * 2 - 1;
+    scroll.my = 1 - (ev.clientY / innerHeight) * 2;
+  }, { passive: true });
+
+  const pin=document.getElementById("pin"), ui=document.getElementById("ui"),
+        line2=document.getElementById("line2"),
+        l1a=document.getElementById("l1a"), l1b=document.getElementById("l1b"), caption=document.getElementById("caption"),
+        cue=document.getElementById("cue"), hud=document.getElementById("hud"),
+        odo=document.getElementById("odo");
+
+  /* ---------- odometer: wheels roll, they don't swap ---------- */
+  const COLS=[{key:"tens",mul:0.1},{key:"ones",mul:1},{key:"point"},{key:"tenths",mul:10}];
+  const stacks={}, spin={}, blurAmt={};
+  let cellPx=102;
+  for (const c of COLS){
+    if (c.key==="point"){
+      const d=document.createElement("div"); d.className="odo-pt"; d.textContent="."; odo.appendChild(d); continue;
+    }
+    const col=document.createElement("div"); col.className="odo-col";
+    const st=document.createElement("div"); st.className="stack";
+    // the wheels travel up to position ~25, so the strip must be long enough
+    // for that whole run — an 11-cell strip would translate clean off the end
+    for(let i=0;i<=44;i++){ const cell=document.createElement("i"); cell.textContent=String(i%10); st.appendChild(cell); }
+    col.appendChild(st); odo.appendChild(col);
+    stacks[c.key]={st,col,mul:c.mul}; blurAmt[c.key]=0;
+  }
+  function measureCell(){ if(stacks.ones) cellPx = stacks.ones.col.getBoundingClientRect().height || cellPx; }
+  measureCell();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureCell);
+  addEventListener("resize", measureCell, {passive:true});
+
+  /* SMOOTH TICKER.
+     Driving each wheel from the literal value meant the tenths wheel span 471
+     digits in 2.6s — about 18 rotations a second, which strobes rather than
+     reads. It is an illustration of time passing, not a readout, so each wheel
+     now travels its OWN short forward path from start digit to end digit: no
+     carry logic, no fast spin, and the value is still exactly right at both
+     ends. Higher places move less, as on a real odometer. */
+  /* Three states: 0 -> 0.0 months -> 6.4 -> 53.5, so each wheel has TWO legs.
+     Positions are cumulative and always increase, so every wheel only ever
+     rolls forward. Spins are deliberate extra turns for feel, not accuracy. */
+  const WHEEL = {
+    tens:   [0,  0,  5],
+    ones:   [0,  6, 23],   // 0->6, then 6->13 plus one spin
+    tenths: [0, 14, 35],   // 0->4 +1 spin, then ->5 +2 spins
+  }
+  function wheelPos(key, p){
+    const k = WHEEL[key]
+    return p <= 0.5 ? lerp(k[0], k[1], p / 0.5)
+                    : lerp(k[1], k[2], (p - 0.5) / 0.5)
+  }
+
+  function setOdometer(p){
+    for (const key in stacks){
+      const { st, col } = stacks[key]
+      const pos = wheelPos(key, p)
+      st.style.transform = `translateY(${(0.275 - pos).toFixed(4)}em)`
+
+      const prev = spin[key] === undefined ? pos : spin[key]
+      spin[key] = pos
+      const speed = Math.abs(pos - prev)
+      blurAmt[key] = blurAmt[key] * 0.84 + speed * 0.16
+
+      // edge softness follows speed — continuous, so nothing ever snaps
+      /* While the wheel spins, which digit is showing is meaningless — so the
+         window stops being a window. The opaque band closes INWARD (--eat) and
+         the ramp widens (--fade) until the strip is pure gradient into the
+         ground, with no edge anywhere to read as a border. At rest it opens
+         back out to the full glyph with only a hairline feather. */
+      const feather = clamp(blurAmt[key] * 30, 0, 1)
+      col.style.setProperty("--eat",  (feather * 11.5).toFixed(2) + "%")
+      col.style.setProperty("--fade", (2.4 + feather * 11.0).toFixed(2) + "%")
+
+      const px = clamp(blurAmt[key] * cellPx * 0.30, 0, 9)
+      st.style.filter = px > 0.3 ? `url(#mb-${key})` : "none"
+      const fe = document.getElementById(`fe-${key}`)
+      if (fe) fe.setAttribute("stdDeviation", `0 ${px.toFixed(2)}`)
+
+      if (key === "tens") {
+        // A hidden column still occupies its width, which pushed "6.4" off the
+        // left margin. Collapse it as it fades so the group stays flush.
+        const o = smoothstep(0.55, 0.78, p)
+        col.style.opacity = o
+        col.style.width = (0.60 * o).toFixed(4) + "em"
+      }
+    }
+  }
+
+  /* ---------- vertical tick rail ---------- */
+  /* Ticks are anchored to the HEAD, not to month zero. Anchored to zero the
+     marker landed between ticks and read as misaligned; anchored to the head
+     it sits exactly on one at every point, and the spacing still compresses
+     because the head keeps moving further up the scale. This is illustration,
+     not a measuring instrument. */
+  /* --gutter is now a max()/calc() expression; parseFloat cannot evaluate it,
+     so it is measured off the rail's own resolved position instead. */
+  let GUTTER = 24
+  function readGutter(){
+    const r = railEl.getBoundingClientRect()
+    GUTTER = Math.round(innerWidth - r.right)
+  }
+  const LEAD_GAP = 22                        // breathing room between text and leader
+  /* Every tick is a FIXED month, so as the count runs up a given month falls
+     further into the past and slides DOWN the rail — one direction, always.
+     Three things had to hold at once and only this arrangement gets all of
+     them:
+
+     STEP is fixed at 3 months, deliberately. A sparse rail at 6 months and a
+     dense one at 53 is the whole point — holding the pitch constant made both
+     scenes read as the same object and threw the comparison away.
+
+     The rail runs on ROUNDED months (0 -> 6 -> 54) while the ticker keeps the
+     real figures. That one move fixes everything that was wrong with it: 6 and
+     54 sit exactly on a 3-month grid, so both marks land on a tick instead of
+     between them; month 0 lands exactly on the foot; and since the month at
+     y=0 is always twice the head month, the top lands on a tick too. Both ends
+     are flush at rest with no pinned caps propping them up. The rail is an
+     illustration of a ratio, not a measuring instrument.
+
+     WIDTH swells toward the middle, so the left edge reads as a slow hill
+     rather than a ladder. */
+  const RAIL_S = 3
+  const RAIL_POOL = 80
+  const RAIL_W = 30, RAIL_BUMP = 34
+  const MARK_M = [6, 54]
+  const railEl = document.getElementById("rail")
+  const railEls = []
+  for (let i = 0; i < RAIL_POOL; i++) {
+    const t = document.createElement("i")
+    railEl.appendChild(t)
+    railEls.push(t)
+  }
+  const MARKS = [
+    { m: 6,  label: "not aligned with prediction" },
+    { m: 54, label: "aligned with prediction" },
+  ]
+  const markEls = MARKS.map(mk => {
+    const e = document.createElement("i")
+    e.className = "mark"
+    e.innerHTML = `<b></b><span>${mk.label}</span>`
+    railEl.appendChild(e)
+    return e
+  })
+
+  /* ---------- baseline-match "months" to the live digit ----------
+     A zero-size inline-block on `vertical-align:baseline` has its bottom edge
+     exactly ON the baseline, which makes both baselines directly measurable.
+     The live digit is the cell centred in the mask window, so its box top is
+     0.2744em below the column top (the window runs 17.7%-82.3% of 1.55em). */
+  const unitEl = document.getElementById("odounit")
+  const readoutEl = document.querySelector(".readout")
+  const railGeom = { top: 0, h: 1 }, markW = []
+  const subEl = document.querySelector(".readout .unit")
+  function baselineIn(el){
+    // nowrap is not cosmetic: inside a collapsed column the probe wraps to a
+    // second line and the reading comes back a full line out.
+    const ws = el.style.whiteSpace
+    el.style.whiteSpace = "nowrap"
+    const pr = document.createElement("span")
+    pr.style.cssText = "display:inline-block;width:0;height:0;vertical-align:baseline"
+    el.appendChild(pr)
+    const y = pr.getBoundingClientRect().bottom - el.getBoundingClientRect().top
+    pr.remove()
+    el.style.whiteSpace = ws
+    return y
+  }
+  /* The offset must be a TRANSFORM, not a margin. A margin makes the unit box
+     taller, which grows .odo-row, which pushes the bottom-anchored group up —
+     so the measurement moves the very thing it just measured, and the number
+     ends up a full em out of line at exactly the states that matter. */
+  /* Distance from a line's baseline to the bottom of its line box, for the
+     given element's font and line-height. Measured off-layout so nothing on
+     the page moves while we look at it. */
+  function descentOf(src){
+    const cs = getComputedStyle(src)
+    const host = document.createElement("span")
+    host.style.cssText = "position:absolute;left:-9999px;top:0;visibility:hidden;" +
+      "display:block;white-space:nowrap;" +
+      `font-family:${cs.fontFamily};font-size:${cs.fontSize};font-weight:${cs.fontWeight};` +
+      `letter-spacing:${cs.letterSpacing};line-height:${cs.lineHeight}`
+    host.textContent = "x"
+    document.body.appendChild(host)
+    const pr = document.createElement("span")
+    pr.style.cssText = "display:inline-block;width:0;height:0;vertical-align:baseline"
+    host.appendChild(pr)
+    const d = host.getBoundingClientRect().bottom - pr.getBoundingClientRect().bottom
+    host.remove()
+    return d
+  }
+
+  function alignUnit(){
+    readGutter()
+    // the LAST column is the tenths — it is never the one that collapses
+    const cols = odo.querySelectorAll(".odo-col")
+    const col = cols[cols.length - 1], cell = col && col.querySelector("i")
+    if (!cell) return
+    const fs = parseFloat(getComputedStyle(odo).fontSize)
+    unitEl.style.transform = "none"
+    const digitBase = col.getBoundingClientRect().top + 0.2744 * fs + baselineIn(cell)
+    const unitBase  = unitEl.getBoundingClientRect().top + baselineIn(unitEl)
+    unitEl.style.transform = `translateY(${(digitBase - unitBase).toFixed(2)}px)`
+
+    /* Same problem at the foot of the frame. The caption's BOX already shares
+       the rail's bottom edge, but its last line carries half-leading and a
+       descent below the baseline, so the ink stops short of the tick and reads
+       as unaligned. Measured on a detached probe — baselineIn() forces nowrap,
+       which is correct for a one-line digit cell and destroys a wrapped
+       paragraph, collapsing it to a single line that does not exist. */
+    /* One line across the foot of the frame: the figure, its descriptor and
+       the description opposite all sit on the timeline's bottom tick. Both
+       groups move to the rail — the rail is the datum, not the text. */
+    const foot = railEl.getBoundingClientRect().bottom
+    caption.style.transform = "none"
+    const capBase = caption.getBoundingClientRect().bottom - descentOf(caption)
+    caption.style.transform = `translateY(${(foot - capBase).toFixed(2)}px)`
+    readoutEl.style.transform = "none"
+    const subBase = subEl.getBoundingClientRect().bottom - descentOf(subEl)
+    readoutEl.style.transform = `translateY(${(foot - subBase).toFixed(2)}px)`
+
+    /* Cache everything setRail would otherwise MEASURE each frame. Reading
+       offsetWidth after writing style to eighty tick elements forces a full
+       synchronous layout every single frame — that is the stutter, and it got
+       worse the moment the ticks started writing width as well as top. None of
+       these values change unless the viewport does. */
+    railGeom.top = railEl.getBoundingClientRect().top
+    railGeom.h   = railEl.getBoundingClientRect().height
+    markEls.forEach((e, i) => {
+      const prev = e.style.display
+      e.style.display = "block"
+      markW[i] = e.lastElementChild.offsetWidth
+      e.style.display = prev
+    })
+  }
+
+  function setRail(months){
+    const H = railGeom.h
+    /* ORIENTATION (the comments used to describe the pre-flip layout):
+         y = headY + (m - months) * pxPerMonth,  headY = H/2,  px = span/months
+         m = 0        -> y = 0     month zero is PINNED at the TOP, always
+         m = months   -> y = H/2   the head, on the orb's centre line
+         y = H        -> m = 2*months   the moving frontier at the foot
+       Time therefore runs DOWNWARD; ticks travel UP and converge on the
+       pinned top line, and new ticks arrive from the BOTTOM. */
+    /* The orb sits at (0,0,z) on a camera looking straight down -Z, so it
+       projects to EXACTLY innerHeight/2. Anything else and the leader line
+       leaves the rail above the dot it is supposed to be pointing at. */
+    const headY = innerHeight * 0.5 - railGeom.top
+    /* Scale off the distance from the TOP to the head, not from the head to
+       the foot. That is what puts month zero exactly on y = 0:
+           m = 0  ->  headY - months * (headY / months)  =  0
+       With the section's 48/96 padding the rail box is no longer centred on
+       the orb, so the two cannot both be flush — the foot now ends on
+       whichever grid tick falls last, and that gap is widest at scene 2 where
+       the 3-month step is ~200px. */
+    const span = Math.max(headY, 1)
+    /* EXACT division, no floor of any kind. Month zero lands on y = 0 only if
+       the divisor is `months` itself — a soft floor of sqrt(months^2 + 1.6^2)
+       pushed it to y = 12 and left 153px hanging at the foot, which is what
+       kept the sparse state ragged while the dense one was perfect. The old
+       hard clamp at 1.6 is gone with it, and with it the abrupt stop: month
+       zero no longer slides up and halt, it is simply the top of the scale.
+       The epsilon only guards the divide at literally zero months, far below
+       anything on screen. */
+    const pxPerMonth = span / Math.max(months, 0.05)
+
+    // Both markers ride the scale. "not aligned" also fades out deliberately
+    // as we travel to dot 2 — it belongs to a cohort we have left behind.
+    /* Centre the sentence in the gap between the orb and the rail. The orb's
+       screen radius changes with the camera, so it is computed rather than
+       assumed — hardcoding left it 7px off the orb and 176px off the rail. */
+    const pz = scroll.p
+    const fpx = (innerHeight / 2) / Math.tan(38 * Math.PI / 360)
+    /* Measured against the orb at its RESTING size, not its live size. Tracking
+       the live edge made the label drift sideways while it descended — it has
+       to fall straight down. */
+    const orbRight = innerWidth / 2 + fpx / 6.4
+    const railX = innerWidth - GUTTER - 30                 // left edge of the ticks
+
+    /* ONE ramp drives both labels. Two separate windows — out over 0.54-0.74,
+       in over 0.62-0.86 — put a lag between them, so the pair read as one
+       thing leaving and then a second thing arriving. Driving both from a
+       single progress makes them complementary by construction: the outgoing
+       and incoming opacities always sum to 1, so it is one continuous
+       hand-over travelling up the rail rather than two events. */
+    const x = smoothstep(0.56, 0.86, pz)
+    const fade = [1 - x, x]
+    const liveMarks = []
+    MARKS.forEach((mk, i) => {
+      const y = headY + (mk.m - months) * pxPerMonth
+      const e = markEls[i], sp = e.lastElementChild
+      const edge = Math.min(smoothstep(-60, 20, y), 1 - smoothstep(H - 20, H + 60, y))
+      const o = fade[i] * edge
+      e.style.display = o > 0.004 ? "block" : "none"
+      if (o <= 0.004) return
+      liveMarks.push({ m: mk.m, o })   // crossfades with its grid tick below
+
+      const textW = markW[i] || 1
+      const pad = Math.max((railX - orbRight - textW) / 2, 40)
+      /* The leader is the longest tick on the rail, so it obeys the same hill:
+         full reach at the crown, drawing back toward the rail as it travels
+         away from it. The sentence rides the line rather than sitting at a
+         fixed column. Transforms only — see the note on .rail. */
+      const reach = 30 + pad * (0.52 + 0.48 * hill(y, H))
+      const lineLen = Math.max(reach - LEAD_GAP, 24)
+      e.style.transform = `translate3d(0,${y.toFixed(1)}px,0)`
+      e.firstElementChild.style.transform = `scaleX(${(lineLen / 300).toFixed(4)})`
+      sp.style.transform = `translate3d(${(-reach).toFixed(1)}px,-50%,0)`
+      e.style.opacity = o.toFixed(3)
+      // blur-to-clear on arrival, the way Framer reveals text
+      sp.style.filter = o > 0.995 ? "none" : `blur(${((1 - o) * BLUR).toFixed(2)}px)`
+    })
+    /* Reversed: month zero sits at the TOP and time runs downward, so as the
+       count climbs every tick travels UP and out. The marks therefore rise
+       into place from below rather than dropping in from above. */
+    let m = 0, used = 0
+    for (; used < RAIL_POOL; m += RAIL_S) {
+      const y = headY + (m - months) * pxPerMonth
+      if (y > H + 12) break
+      if (y < -12) continue
+      /* The mark and the grid tick at the same month CROSSFADE. Suppressing
+         the tick outright while the mark was live meant that when the mark
+         faded the tick reappeared at full strength — the line blinked out and
+         came back in the other colour. Their opacities are complementary now,
+         so the line simply changes colour in place, on the timeline's clock. */
+      const hit = liveMarks.find(x => Math.abs(x.m - m) < RAIL_S * 0.5)
+      const markMix = hit ? hit.o : 0
+      if (markMix > 0.996) continue
+      const t = railEls[used++]
+      if (t._on !== 1){ t.style.display = "block"; t._on = 1 }
+      const ty = Math.round(y * 10) / 10
+      const tw = Math.round(RAIL_W + RAIL_BUMP * hill(y, H))
+      if (t._y !== ty || t._w !== tw){
+        t.style.transform = `translate3d(0,${ty}px,0) scaleX(${(tw / 64).toFixed(4)})`
+        t._y = ty; t._w = tw
+      }
+      /* NO fade inside the frame. Month zero is pinned at exactly y = 0 and
+         at rest a tick lands exactly on y = H, so a 30px edge ramp erased both
+         terminal lines — the very ends that are supposed to sit flush against
+         the padding. Ticks are solid everywhere they are visible; the fade is
+         pushed entirely OUTSIDE the frame, across the 12px of overscan the
+         loop now allows, so a tick arriving from beyond the edge ramps up
+         before it reaches the boundary rather than popping at it. */
+      const te = (y < 0 ? Math.max(0, 1 + y / 12)
+               :  y > H ? Math.max(0, 1 - (y - H) / 12)
+               :  1) * (1 - markMix)
+      const teq = Math.round(te * 50) / 50
+      if (t._e !== teq){ t.style.opacity = teq; t._e = teq }
+    }
+    for (let k = used; k < RAIL_POOL; k++){
+      const t = railEls[k]
+      if (t._on !== 0){ t.style.display = "none"; t._on = 0 }
+    }
+  }
+
+  /* A cosine bell over the full height: 1 at the middle, 0 at both edges. The
+     ticks reach further left as they approach the centre, so the rail's left
+     edge is a slow hill instead of a straight ladder. The exponent sharpens
+     the shoulders WITHOUT touching the crown — bell(0) is 1 at any power, so
+     the longest line keeps its length and only the curve around it tightens. */
+  const HILL_POW = 1.9
+  function hill(y, H){
+    const u = Math.min(Math.abs(y / H - 0.5) * 2, 1)
+    const c = Math.cos(u * Math.PI / 2)
+    return Math.pow(c * c, HILL_POW)
+  }
+
+  /* ---------- Framer-style word reveal ----------
+     Each word rises a little, resolves out of blur and fades up, staggered
+     along the line. Split once; driven per frame by a 0..1 progress. */
+  function splitWords(el){
+    const parts = el.textContent.split(/(\s+)/);
+    el.textContent = "";
+    const out = [];
+    for (const part of parts){
+      // an explicit newline in the source is a hard break, not a word gap
+      if (!part.trim() && part.includes("\n")){ el.appendChild(document.createElement("br")); continue }
+      const w = document.createElement("span"); w.className = "wd";
+      const b = document.createElement("b"); b.textContent = part;
+      w.appendChild(b); el.appendChild(w);
+      if (part.trim()) out.push(b);
+    }
+    return out;
+  }
+  const WORDS = new Map([l1a, l1b, line2].map(el => [el, splitWords(el)]));
+
+  /* Framer's text effect, replicated properly — including how it is DRIVEN.
+     Framer runs a text effect on its own clock: a per-word duration and a
+     stagger in SECONDS, started by a trigger. Mapping every word onto scroll
+     progress instead, as this did, makes the reveal's speed the derivative of
+     the scroll tween — it accelerates and decelerates with the scroll and with
+     the tween's own easing on top. That compounding is what read as stutter.
+     Scroll now only decides WHETHER a group should be in; the animation itself
+     plays at a fixed rate, and runs backwards when you scroll back up, so it
+     is fully reversible without ever being scrubbed.
+     Numbers are Framer's own: 10px blur, 0.62s per word, 0.07s stagger. */
+  /* Read off eviive.ch itself, not approximated. Every text effect on the
+     live site is the same tween, 105 instances of it:
+        blur(10px) -> 0, translateY(10px) -> 0, opacity 0 -> 1
+        duration 0.85s, ease cubic-bezier(0.44, 0, 0.56, 1), stagger 0.1s
+     The easing was the thing that made this never look like Framer: theirs is
+     symmetric ease-in-OUT — slow to start as well as slow to land — where a
+     plain ease-out leaps off the mark. The lift was also twice what it should
+     be at 0.42em; the site uses a flat 10px regardless of type size. */
+  const REV_DUR = 850, REV_STAG = 100, LINE_STAG = 240;   // ms
+  const RISE = 10, BLUR = 10;                 // px of lift, px of blur
+  const easeOut = bezierEasing(0.44, 0, 0.56, 1);
+
+  const revGroups = [
+    /* Separate ENTER and EXIT thresholds. Coming back from scene 3 the ground
+       relights on smoothstep(0.58, 0.96), so an exit that only begins at 0.58
+       is still fading out long after the navy has returned — setInk recolours
+       it to the dark-ground palette on the way, which is why it went white
+       with an electric-blue second line. Leaving at 0.94 puts the whole exit
+       inside the light half of the move.
+       l1a has no lower bound: once revealed it stays, exactly as a Framer
+       appear animation does. The container fade hides it at state 0. */
+    /* `inAt` is PRESENCE, `armAt` is permission for the cascade to run.
+       l1a is present from target 0 — that is what lets it stay when you go
+       back to the empty state — but at load target IS 0, so with one predicate
+       its reveal ran to completion behind an invisible overlay and was over
+       before you ever reached scene 2. Arming it separately means the words
+       wait for the scene they belong to. */
+    /* Motion direction NEVER changes: text always rises from below, exactly as
+       Framer does (translateY(10px) -> 0), whichever way you are scrolling.
+       Only the ORDER of the words changes, and only when the line is coming
+       BACK after having left — a first appearance reads forward like any other
+       Framer text; a return retraces, last word first. Flipping the motion as
+       well made both entrances read as a different animation entirely. */
+    { els: [l1a],        inAt: () => target <= 0.5, armAt: () => target === 0.5,
+      /* EXACTLY scene 2. `>= 0.5` was also true at scene 3, so arming never
+         switched off on the way out and never switched back on coming home —
+         the block that flags a return as a return simply never ran. */
+      armExact: true, exitY: -1, canReverse: true },
+    /* ALL text leaves UPWARD — there is no case where it drops out. exitY:+1
+       here was my own invention and was never asked for. And because this line
+       only ever leaves while you are scrolling UP, its exit runs in reverse
+       reading order: last word first, mirroring the way the line below it
+       comes back. */
+    { els: [l1b, line2], inAt: () => target >= 1, exitY: -1, exitReverse: true },
+  ];
+  /* Leaving is the SAME animation as arriving — word by word, out through
+     blur — only travelling up instead of down. Compressed so the whole line
+     still clears before the ground relights underneath it. */
+  const EXIT_DUR = 380, EXIT_SCALE = 0.45;
+  for (const g of revGroups){
+    g.words = g.els.reduce((all, e) => all.concat(WORDS.get(e)), []);
+    g.span  = REV_DUR + REV_STAG * Math.max(g.words.length - 1, 0);
+    g.maxD0 = REV_STAG * Math.max(g.words.length - 1, 0);
+    g.xspan = EXIT_DUR + g.maxD0 * EXIT_SCALE;
+    g.t = 0; g.x = 0;
+  }
+  /* Word by word WITHIN a line, line after line. One flat sequence numbered
+     across the whole headline ignores where the lines actually break, so a
+     line that wraps runs straight on from the one above with no beat between
+     them. Each word's delay is measured from the rendered line boxes, so it
+     follows the real wrap at any width. */
+  function layoutStagger(){
+    for (const g of revGroups){
+      const was = g.els.map(e => e.style.display);
+      g.els.forEach(e => { e.style.display = "block" });
+      let lastTop = null, line = -1, k = 0;
+      for (const b of g.words){
+        const top = Math.round(b.getBoundingClientRect().top);
+        if (lastTop === null || Math.abs(top - lastTop) > 4){ line++; lastTop = top; k = 0 }
+        b._d0 = line * LINE_STAG + k * REV_STAG;
+        k++;
+      }
+      g.maxD0 = Math.max(0, ...g.words.map(b => b._d0));
+      g.span  = REV_DUR  + g.maxD0;
+      g.xspan = EXIT_DUR + g.maxD0 * EXIT_SCALE;
+      g.els.forEach((e, i) => { e.style.display = was[i] });
+    }
+  }
+
+  let revLast = -1, capT = 0, dt = 16;
+  /* ONE rule for every line, both directions:
+       scrolling DOWN — everything travels UP.   enter from below, leave upward,
+                        words in reading order.
+       scrolling UP   — everything travels DOWN. enter from above, leave downward,
+                        words last-in-first-out.
+     Encoding this as per-line constants (exitY on one, enterReverse on another)
+     is what made every fix break a neighbouring case: there are four
+     combinations and each line only ever had two of them written down. */
+  let scrollDir = 1, prevTarget = 0;
+  function setHeadline(p, now){
+    dt = revLast < 0 ? 16 : Math.min(now - revLast, 64);
+    revLast = now;
+    if (target !== prevTarget){ scrollDir = target > prevTarget ? 1 : -1; prevTarget = target }
+    for (const g of revGroups){
+      const want = g.inAt();
+      /* Framer's appear semantics, exactly: the words stagger in ONCE, when
+         the line first arrives. After that the line simply exists. Scrolling
+         back up does not replay it and does not un-reveal it word by word —
+         reverse-playing a 1.5s stagger against a 1.75s scroll tween is what
+         made the way back feel like a separate, unrelated animation.
+         Leaving is a single block move on one clock, so both titles and the
+         scroll stay in step: the replaced title lifts away, the one being
+         left behind settles back down the way it came. */
+      /* The words cascade EVERY time the line arrives. `seen` snapped g.t
+         straight to 1 after the first reveal, so the stagger ran once in the
+         session and never again — which is a Framer appear animation that
+         never re-enters, not the one that does. A line that fully leaves
+         replays when it comes back; that is exactly what Framer does. */
+      const armed = g.armAt ? g.armAt() : want;
+      /* A fresh ARRIVAL always starts the cascade from zero. g.t was only
+         reset once an exit had fully completed, so turning back into a scene
+         mid-exit resumed the old cascade from wherever it had stopped — the
+         line came in most of the way and then visibly restarted. Snapping g.x
+         to 0 at the same moment avoids showing the tail of the exit first. */
+      /* Two different flips, two different jobs. PRESENCE flipping on clears
+         any half-finished exit. ARMING flipping on restarts the cascade — and
+         that is the one that matters for the first title, whose presence never
+         flips between scenes 1 and 2 (it is present at both, which is what
+         lets it stay when you go back). Resetting on presence alone meant it
+         revealed once and then never replayed on the way in again. */
+      /* Read this BEFORE anything clears g.x. Presence and arming flip on the
+         same frame when you come back from scene 3, so the presence reset was
+         wiping the very evidence the arm test needed — the return could never
+         tell itself apart from a first appearance. */
+      const wasOut = g.x > 0.02;
+      if (want && !g.was) g.x = 0;
+      // a RETURN is an arm-flip that finds the line already on its way out
+      /* Clearing g.x here is the whole thing. Coming back, the exit progress
+         is still 1 and only decays over ~470ms, so the code stayed in the
+         LEAVING branch and simply played the exit backwards — which is why the
+         return read as the wrong direction. It was never the entry animation.
+         Snapping it to 0 hands control to the entry immediately. */
+      if (armed && !g.wasArmed){ g.revEntry = wasOut; g.t = 0; g.x = 0 }
+      g.was = want; g.wasArmed = armed;
+      if (want){
+        g.x = clamp(g.x - dt / g.xspan, 0, 1);
+        if (armed) g.t = clamp(g.t + dt / g.span, 0, 1);
+      } else {
+        g.x = clamp(g.x + dt / g.xspan, 0, 1);
+        if (g.x >= 1) g.t = 0;        // fully gone — next arrival replays it
+      }
+      // the block itself never moves; every word carries its own motion
+      for (const el of g.els){
+        if (el._clr !== 1){ el.style.transform = "none"; el.style.opacity = ""; el.style.filter = "none"; el._clr = 1 }
+      }
+      const leaving = g.x > 0.0001;
+      const shown = leaving ? g.x < 0.999 : g.t > 0.0005;
+      for (const e of g.els){
+        const d = shown ? "block" : "none";
+        if (e._d !== d){ e.style.display = d; e._d = d }
+      }
+      if (!shown) continue;
+      const elapsed = leaving ? g.x * g.xspan : g.t * g.span;
+      for (let i = 0; i < g.words.length; i++){
+        const b0 = g.words[i], d0 = b0._d0 || 0;
+        /* One expression for both directions: `v` is how present the word is.
+           Arriving it rises from below; leaving it continues upward, so the
+           line reads as one gesture passing through rather than two. */
+        // reading order going down, last-in-first-out coming back
+        const ed = scrollDir < 0 ? (g.maxD0 - d0) : d0;
+        const v = leaving
+          ? 1 - easeOut(clamp((elapsed - ed * EXIT_SCALE) / EXIT_DUR, 0, 1))
+          : easeOut(clamp((elapsed - ed) / REV_DUR, 0, 1));
+        // arriving comes FROM the direction of travel, leaving goes TOWARD it
+        const dir = leaving ? -scrollDir : scrollDir;
+        const b = b0;
+        const qo = Math.round(v * 100) / 100;
+        if (b._o !== qo){ b.style.opacity = qo; b._o = qo }
+        const qy = Math.round((1 - v) * RISE * dir * 4) / 4;
+        if (b._y !== qy){
+          b.style.transform = Math.abs(qy) < 0.2 ? "none" : `translate3d(0,${qy}px,0)`;
+          b._y = qy;
+        }
+        const qb = Math.round((1 - v) * BLUR * 4) / 4;
+        if (b._b !== qb){
+          b.style.filter = qb < 0.2 ? "none" : `blur(${qb}px)`;
+          b._b = qb;
+        }
+      }
+    }
+  }
+
+  /* ---------- ink follows the ground from navy to white ---------- */
+  const mixc=(a,b,t)=>`rgba(${Math.round(lerp(a[0],b[0],t))},${Math.round(lerp(a[1],b[1],t))},${Math.round(lerp(a[2],b[2],t))},${(lerp(a[3],b[3],t)).toFixed(3)})`;
+  const INK_D=[255,255,255,.96], INK_L=[11,32,40,.94];
+  const SOFT_D=[248,246,242,.42], SOFT_L=[11,32,40,.52];
+  const GHOST_D=[248,246,242,.22], GHOST_L=[11,32,40,.24];
+  const ACC_D=[103,234,255,1],     ACC_L=[6,132,177,1];
+  function setInk(t){
+    ui.style.setProperty("--ink",   mixc(INK_D,   INK_L,   t));
+    ui.style.setProperty("--soft",  mixc(SOFT_D,  SOFT_L,  t));
+    ui.style.setProperty("--ghost", mixc(GHOST_D, GHOST_L, t));
+    ui.style.setProperty("--accent",mixc(ACC_D,   ACC_L,   t));
+  }
+
+  /* ---------- easing measured off the reference video ----------
+     Its main transition reaches 8% / 37% / 82% at quarter / half /
+     three-quarter time — a long slow head and a soft landing. A critically
+     damped spring does ~26/59/80, which is front-loaded and reads as abrupt.
+     Stretched from the reference's 1.27s to 2.6s because the subject is
+     survival. */
+  function bezierEasing(x1,y1,x2,y2){
+    const bx=t=>{const u=1-t;return 3*u*u*t*x1+3*u*t*t*x2+t*t*t;};
+    const by=t=>{const u=1-t;return 3*u*u*t*y1+3*u*t*t*y2+t*t*t;};
+    return x=>{
+      if(x<=0)return 0; if(x>=1)return 1;
+      let lo=0,hi=1,m=0;
+      for(let i=0;i<24;i++){ m=(lo+hi)/2; if(bx(m)<x) lo=m; else hi=m; }
+      return by((lo+hi)/2);
+    };
+  }
+  // The reference curve's flat head (8% at quarter-time) reads as lag when
+  // YOU are the one scrolling. Quicker to respond, still a long soft tail.
+  /* WEIGHT, not responsiveness — I had been tuning for the wrong quality.
+     A snappy curve says "this is cheap to move". This move is 6.4 months to
+     53.5, and it should feel like shifting something heavy: mass builds
+     against inertia, carries through the middle, and takes a long time to
+     settle. That means a real ease-IN at the front — which only reads as lag
+     on a short move. Over 2.6s it reads as momentum.
+
+     Chosen by measuring the SPEED profile, not the position curve. Weight is
+     sustained travel, so what matters is how much of the move is spent near
+     full speed rather than spiking through it:
+
+        curve                 peak/mean   time near speed   moving at 85%
+        0.50,0,0.20,1           3.01x          30%             1.4%
+        0.65,0,0.35,1           2.85x          25%             2.2%
+        0.45,.05,.55,.95        1.73x          55%             5.3%
+        0.37,0,0.63,1           1.59x          65%             5.4%   <-
+
+     The first two creep, lurch, then die — 96% done at three-quarter time is
+     the same dead tail the original had. This one holds speed across two
+     thirds of the move and is still visibly travelling at 85%, which is what
+     mass actually does. */
+  const EASE=bezierEasing(0.37,0,0.63,1);
+  const DUR=2600;   // long enough for the acceleration itself to be legible
+  let target=0, from=0, t0=-1e9;
+
+  function readScroll(){
+    const r = pin.getBoundingClientRect();
+    const travel = r.height - innerHeight;
+    const raw = travel > 0 ? clamp(-r.top / travel, 0, 1) : 0;
+    /* There are exactly three states, so quantise to them. Tracking the raw
+       scroll meant every event during the browser's own snap animation reset
+       `from` and `t0` — the tween restarted dozens of times on the way to one
+       state, which is the stutter. Quantised, the target changes once. */
+    const q = Math.round(raw * 2) / 2;               // 0, 0.5, 1
+    if (q !== target){ from = scroll.p; target = q; t0 = performance.now(); }
+  }
+  alignUnit(); layoutStagger();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { alignUnit(); layoutStagger() });
+  addEventListener("resize", () => { alignUnit(); layoutStagger() });
+  addEventListener("scroll", readScroll, {passive:true});
+  readScroll();
+
+  function frame(now){
+    scroll.p = reduced ? target : from + (target-from)*EASE(clamp((now-t0)/DUR,0,1));
+    const p = scroll.p;
+
+    try{
+      setOdometer(p);
+      /* GEOMETRIC, not linear. Tick spacing is span/months — a 1/x curve — so
+       stepping the month COUNT evenly compresses the rail violently at the
+       start and almost not at all at the end, and no easing on top can fix
+       that because the unevenness is in the mapping, not the timing. Stepping
+       the scale geometrically makes the spacing change by a constant RATIO per
+       unit time, which is what reads as a smooth zoom. Halfway is now 18
+       months rather than 30 — the rail spends its time where the squeeze is
+       actually visible. */
+    setRail(p <= 0.5
+      ? lerp(0, 6, p / 0.5)
+      : Math.exp(lerp(Math.log(6), Math.log(54), (p - 0.5) / 0.5)));
+      setHeadline(p, now);
+      setInk(smoothstep(.58,.96,p));
+    }catch(err){ if(!window.__eviiveErr){ window.__eviiveErr = err.stack||String(err); console.error("[eviive] frame:", err); } }
+
+    // At state 0 the screen is empty — everything arrives with the first scroll.
+    /* Container fully opaque BEFORE the first words begin their own fade at
+       p=0.08 — two opacity ramps stacked on the same glyphs read as flicker. */
+    ui.style.opacity = smoothstep(0.02, 0.14, p);
+
+
+    /* The caption was SCRUBBED by scroll position while every other piece of
+       text runs on Framer's 0.85s clock, and its blur peaked at 6px against
+       everything else's 10px. Same trigger, same clock, same curve. */
+    capT = clamp(capT + (target >= 1 ? 1 : -1) * dt / REV_DUR, 0, 1);
+    const capO = easeOut(capT);
+    caption.style.opacity = (capO*0.9).toFixed(3);
+    caption.style.filter = capO > 0.995 ? "none" : `blur(${((1-capO)*BLUR).toFixed(2)}px)`;
+    cue.style.opacity=1-smoothstep(.02,.18,p);
+
+    if (hud.classList.contains("on")){
+      hud.textContent = `p       ${p.toFixed(3)}\ncamZ    ${(-47.1*p).toFixed(2)}\nmonths  ${lerp(PFS_A,PFS_B,p).toFixed(1)}`;
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* Review hook — jump straight to a beat. */
+  window.__eviive = {
+    seek(v){ target = from = scroll.p = clamp(v,0,1); t0=-1e9; return scroll.p; },
+    get progress(){ return scroll.p; },
+    states:{a:0,b:1}
+  };
+  addEventListener("keydown", e => { if(e.key==="d"||e.key==="D") hud.classList.toggle("on"); });
+})();
+</script>
+<script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
