@@ -610,11 +610,23 @@ export default function mount(host) {{
   const prior = neighbours.map((el) => el.style.scrollSnapAlign)
   neighbours.forEach((el) => {{ el.style.scrollSnapAlign = "start" }})
 
-  const io = new IntersectionObserver(
-    ([e]) => document.documentElement.classList.toggle("{snap_class}", e.isIntersecting),
-    {{ threshold: 0 }}
-  )
-  io.observe(host)
+  // Snap ONLY while the section covers the viewport top to bottom. An
+  // IntersectionObserver at threshold 0 switches it on the moment the first
+  // pixel appears, so you feel the page resist while still approaching. The
+  // section is 200vh, so "covers the viewport" is exactly the range in which
+  // you are inside it - and it is off at both ends, so entering and leaving
+  // are ordinary scrolling.
+  let snapOn = false
+  const syncSnap = () => {{
+    const r = host.getBoundingClientRect()
+    const covers = r.top <= 0 && r.bottom >= innerHeight
+    if (covers === snapOn) return
+    snapOn = covers
+    document.documentElement.classList.toggle("{snap_class}", covers)
+  }}
+  syncSnap()
+  addEventListener("scroll", syncSnap, {{ passive: true }})
+  addEventListener("resize", syncSnap, {{ passive: true }})
 
   let blobUrl = ""
   try {{
@@ -626,8 +638,9 @@ export default function mount(host) {{
     if (window.__eviiveStop) window.__eviiveStop()
     ro.disconnect()
     removeEventListener("resize", syncVP)
+    removeEventListener("scroll", syncSnap)
+    removeEventListener("resize", syncSnap)
     neighbours.forEach((el, i) => {{ el.style.scrollSnapAlign = prior[i] || "" }})
-    io.disconnect()
     document.documentElement.classList.remove("{snap_class}")
     style.remove(); driverEl.remove()
     if (blobUrl) URL.revokeObjectURL(blobUrl)
