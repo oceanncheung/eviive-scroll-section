@@ -227,6 +227,20 @@ def main():
         re.search(r"<style[^>]*>(.*?)</style>", html, re.S).group(1)
     )
     css_scoped = css_scoped.replace("height:300vh", "height:200vh")
+    # The nav is opaque and fixed. The BACKGROUND runs full bleed behind it -
+    # that is what makes the section own the screen - while only the CONTENT is
+    # inset below it. .sticky therefore stays 100vh, and the two top-anchored
+    # elements (headline, rail) are pushed down by the nav's height. --nav-h is
+    # measured at runtime; 0px keeps the calc() valid until it is.
+    css_scoped = css_scoped.replace(
+        "--pad-t:48px", "--nav-h:0px;--pad-t:calc(48px + var(--nav-h))", 1
+    )
+    rail_top = "top:var(--pad-b);bottom:var(--pad-b)"
+    if rail_top not in css_scoped:
+        sys.exit("rail rule not found - shape changed")
+    css_scoped = css_scoped.replace(
+        rail_top, "top:calc(var(--pad-b) + var(--nav-h));bottom:var(--pad-b)", 1
+    )
     css = run_esbuild(retarget_css_viewport(css_scoped), "css")
 
     body = re.search(r"<body[^>]*>(.*?)</body>", html, re.S).group(1)
@@ -591,6 +605,34 @@ export default function mount(host) {{
   const ro = new ResizeObserver(syncVP); ro.observe(host)
   addEventListener("resize", syncVP, {{ passive: true }})
 
+  // Measure the fixed site nav so the content can clear it. Bounded scan:
+  // wide, pinned to the top, a plausible bar height.
+  const measureNav = () => {{
+    let h = 0
+    const list = document.querySelectorAll("body > *, body > * > *, body > * > * > *")
+    for (let i = 0; i < list.length; i++) {{
+      const el = list[i]
+      if (el === host || el.contains(host) || host.contains(el)) continue
+      const cs = getComputedStyle(el)
+      if (cs.position !== "fixed" && cs.position !== "sticky") continue
+      const r = el.getBoundingClientRect()
+      if (r.top > 4 || r.width < innerWidth * 0.6) continue
+      if (r.height < 24 || r.height > 220) continue
+      if (r.height > h) h = r.height
+    }}
+    // Only write on change, and make the driver re-measure. alignUnit caches the
+    // rail's geometry and refreshes it only on a viewport change, so moving the
+    // rail via --nav-h without a resize left every tick positioned against stale
+    // coordinates - which is why the timeline disappeared.
+    const px = Math.round(h) + "px"
+    if (px === host.style.getPropertyValue("--nav-h")) return
+    host.style.setProperty("--nav-h", px)
+    dispatchEvent(new Event("resize"))
+  }}
+  measureNav()
+  const navTimer = setInterval(measureNav, 250)   // the nav can mount later
+  setTimeout(() => clearInterval(navTimer), 6000)
+
   const style = document.createElement("style")
   style.textContent = CSS
   document.head.appendChild(style)
@@ -642,6 +684,7 @@ export default function mount(host) {{
     removeEventListener("resize", syncSnap)
     neighbours.forEach((el, i) => {{ el.style.scrollSnapAlign = prior[i] || "" }})
     document.documentElement.classList.remove("{snap_class}")
+    clearInterval(navTimer)
     style.remove(); driverEl.remove()
     if (blobUrl) URL.revokeObjectURL(blobUrl)
     host.innerHTML = ""
