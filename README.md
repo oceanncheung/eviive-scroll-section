@@ -8,8 +8,14 @@ Scroll-driven WebGL section visualising the clinical finding:
 > Not aligned: **6.4 months**.
 
 ## Status
-`golden/eviive-section-v1.1-desktop.html` — desktop, signed off (current).
-`golden/eviive-section-v1.0-desktop.html` — previous, kept for reference.
+`golden/eviive-section-v1.2-responsive.html` — desktop + tablet + phone (current).
+`golden/eviive-section-v1.1-desktop.html` — desktop only.
+`golden/eviive-section-v1.0-desktop.html` — first signed-off desktop.
+
+## Breakpoints
+Layout by aspect ratio: stacked when `width/height < 1.15 || width < 900`.
+Type by Framer's width bands: phone <=809, tablet 810-1199, desktop >=1200.
+These are deliberately different axes — see `NOTES.md`.
 Self-contained: bundle + fonts inlined, opens with a double-click.
 
 ## Build

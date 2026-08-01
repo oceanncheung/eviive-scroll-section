@@ -312,6 +312,8 @@ const ease = t => t * t * (3 - 2 * t)
    the on-screen size grows strictly monotonically while the body still travels
    through real space, which is what the depth of field and parallax need. */
 const ANG_A = R_A / 6.4, ANG_B = R_B / 6.4
+const CAM_BACK = 14.0          // module scope: camZOf and Rig both need it
+const camZOf = p => (p <= 0.5 ? lerp(CAM_BACK, 0, p / 0.5) : lerp(0, CAM_END, (p - 0.5) / 0.5))
 function orbAt(p) {
   if (p <= 0.5) return { z: Z_A, r: R_A, m: 0 }
   const t = clamp((p - 0.5) / 0.5, 0, 1)
@@ -357,11 +359,42 @@ function Orb() {
     u.uOrganic.value = lerp(0.095, 0.105, o.m)
     u.uChurn.value   = 0.0
     mesh.current.position.z = o.z
+
+    /* DECLARE BEFORE USE. `narrow` was read on the position line but declared
+       further down the same scope — a temporal dead zone that threw on every
+       frame, which is why the orb kept rendering dead centre with none of the
+       fitting applied. */
+    const narrow = !!scroll.stacked      // set by alignUnit; never recomputed here
+    const HALF_TAN = Math.tan(38 * Math.PI / 360)      // half-angle of the field
+    const fpxV = (innerHeight / 2) / HALF_TAN
+    const dist = Math.abs(camZOf(scroll.p) - o.z)
+
+    /* Both the position and the size come from the gap the DOM actually
+       leaves between the headline and the rail's furniture, measured in
+       alignUnit. Fixed fractions were chosen independently of where the rail
+       lands, so nothing ever guaranteed they clear it. */
+    const ORB_Y = narrow ? (scroll.orbY || 0.355) : 0.5
+    const lift  = (0.5 - ORB_Y) * 2 * HALF_TAN
+    mesh.current.position.y = narrow ? lift * dist : 0
+    /* Horizontal placement, same principle: the body sits in the middle of the
+       room it has, not the middle of the screen. Half-width at a given depth
+       is dist * tan(halfFov) * aspect. */
+    const ORB_X = scroll.orbX || 0.5
+    mesh.current.position.x = narrow ? 0
+      : (ORB_X - 0.5) * 2 * HALF_TAN * (innerWidth / innerHeight) * dist
+
     /* Surface noise alone is invisible on a body this small on screen — the
        breath has to be in the silhouette. Slow and shallow while it is the
        dead cohort, tighter once it becomes EVIIVE. */
     const breath = 1 + Math.sin(clock.elapsedTime * 0.62) * lerp(0.062, 0.024, o.m)
-    mesh.current.scale.setScalar(o.r * breath)
+    /* Stacked: fitted outright to the measured band. Desktop: fitted the same
+       way but capped at 1, so it can only ever SHRINK to clear the type — the
+       natural size is what carries the true 8.36x ratio against dot 1. */
+    const fitted = scroll.orbDia ? (scroll.orbDia * 6.4) / (2 * fpxV) : null
+    const fit = narrow
+      ? (fitted !== null ? fitted : 0.52)
+      : (fitted !== null ? Math.min(fitted, 1) : 1)
+    mesh.current.scale.setScalar(o.r * breath * fit)
   })
 
   return (
@@ -400,11 +433,22 @@ function Rig({ dof, vignette }) {
   useFrame(() => {
     const p = scroll.p
 
+    /* Stacked layout: the orb sits ABOVE centre with the timeline beneath it,
+       and it has to be smaller because the frame is narrow. A wider field of
+       view shrinks the subject without touching the scene's month geometry —
+       moving the camera back would corrupt the distances the whole section is
+       built on. Camera y goes NEGATIVE to lift the subject in frame. */
+    /* The camera does NOT shift vertically. A fixed camera offset projects to
+       a screen offset of offset/distance, and the distance swells from 6.4 to
+       10.2 through the middle of the move — so the orb visibly rose and fell
+       as it travelled. The lift is applied to the ORB instead, proportional to
+       its own distance, which cancels the division and holds it still. */
+    camera.position.y = 0
+
     /* THREE states.
        0.0  arrival — camera held back, dot 1 soft, timeline not yet in
        0.5  dot 1 framed and sharp, ticker has run 0 -> 6.4
        1.0  dolly complete, EVIIVE framed, ticker 6.4 -> 53.5              */
-    const CAM_BACK = 14.0
     camera.position.z = p <= 0.5
       ? lerp(CAM_BACK, 0, p / 0.5)
       : lerp(0, CAM_END, (p - 0.5) / 0.5)

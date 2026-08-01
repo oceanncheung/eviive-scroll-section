@@ -121,3 +121,66 @@ while the page can scroll.
 
 **`style.transform` normalises to `translate3d(0px, ...)`.** A regex expecting
 `translate3d(0,` matches nothing and silently reports every offset as 0.
+
+
+## Responsive (added v1.2)
+
+**Layout is chosen by ASPECT RATIO, type by width.** Two different questions.
+The desktop composition needs horizontal room BESIDE the orb — rail down the
+right, label in the gap — so what decides it is the shape of the frame, not its
+width. `stacked` when `width/height < 1.15 || width < 900`.
+
+- 1.15 rather than 1.0: a barely-landscape frame still has no usable gap.
+- The 900 floor keeps a landscape PHONE (844x390) stacked — very wide ratio,
+  far too short for a vertical rail with padding at both ends.
+- Type stays on Framer's own width breakpoints (809 / 1199), because that is
+  what Framer does. A landscape iPad gets desktop layout with tablet type.
+
+**ONE source of truth for the mode.** `alignUnit` publishes `scroll.stacked`;
+the scene reads it. It used to run its own `innerWidth <= 1199` test, which
+disagreed the moment the rule became ratio-based — the DOM laid out for desktop
+while the orb still believed it was stacked, and every fix appeared to do
+nothing. Never recompute the mode anywhere else.
+
+**The orb is FITTED to measured space, never to a fraction.** Position and size
+both come from the gap the DOM actually leaves. Fixed fractions were chosen
+independently of where the rail lands, so nothing guaranteed they would not
+collide — and on a 390x844 phone they overlapped by 50px.
+
+**Desktop re-centres ONLY on a collision.** Screen-centred is the default;
+the gap is used to rescue a frame that cannot hold the orb. Recentring
+unconditionally moved it 121px right on a 1512 desktop and changed an approved
+composition. On desktop the fit is also capped at 1 so it can only SHRINK —
+the natural size carries the true 8.36x ratio against dot 1.
+
+**Stacked-layout constants move together.** Three of them, or the guarantees
+break:
+- `MARK_MIN_H` must exceed `RAIL_W_H + RAIL_BUMP_H`, or the mark stops being
+  the tallest thing on the rail and no longer reads as the anchor.
+- `RESERVE` must track `MARK_MIN_H + MARK_SPAN_H + MARK_GAP_H` minus the rail's
+  own height. It is measured from the rail's TOP, not its foot — getting that
+  wrong reserved 67px that nothing occupied and pushed the orb into the title.
+- The orb's diameter is capped by the COLUMN as well as the band, or it runs
+  past the gutters once the band grows.
+
+**`railGeom` is self-healing.** Everything `setRail` needs is measured in
+`alignUnit`; if that has not run since the viewport changed, the rail runs on a
+stale width of 1 and collapses to a single tick. `frame()` compares the current
+viewport against the last measured one and re-measures at most once per change.
+
+**Clear inline placement between breakpoints.** `alignUnit` wipes the inline
+`bottom`/`right`/`text-align` it sets before applying whichever layout is
+current — otherwise resizing tablet to desktop carries the stacked layout's
+positioning across and corrupts the composition.
+
+## Two bugs of the same shape, both silent
+
+**Declare before use.** `narrow` was read on the orb's position line but
+declared further down the same scope — a temporal dead zone throwing every
+frame, so the orb rendered dead centre with no fitting. Earlier, `const spin`
+in the odometer shadowed an existing binding and killed the DOM frame loop
+outright. Neither surfaced as a visible error; both just stopped a loop.
+
+**A failed assertion discards the whole edit.** The scripts used to build this
+write only at the end, so one bad pattern silently reverted every change in the
+batch while the build still reported success. Confirm each edit applied.

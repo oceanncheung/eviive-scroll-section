@@ -72,7 +72,10 @@ body{margin:0;background:var(--dark);font-family:"Inter",system-ui,sans-serif;
    1.55em tall with the live glyph in the middle 1em, and the two faces have
    different metrics, so no CSS ratio lands it — the offset is measured from
    the rendered baselines instead (alignUnit). */
-.odo-row{display:flex;align-items:flex-start;justify-content:flex-start;gap:16px;
+/* 12px is the project's own value — the gap on Framer's Metric component,
+   which pairs a Mono figure with its caption exactly as this does. 16 was
+   invented. */
+.odo-row{display:flex;align-items:flex-start;justify-content:flex-start;gap:12px;
   margin-bottom:calc(var(--f-display-mono) * -0.275)}
 .odo-unit{font-size:var(--f-h3);line-height:1;color:var(--ink);letter-spacing:-.02em;
   align-self:flex-start}
@@ -169,7 +172,77 @@ body{margin:0;background:var(--dark);font-family:"Inter",system-ui,sans-serif;
   .headline .ltr{--f:100%}
   .caption{opacity:1}
 }
-@media (max-width:1280px){:root{--f-display-mono:84px;--f-h2:44px;--f-h3:32px}}
+/* Framer's own breakpoints and its own compiled type scale, read off the
+   published site — NOT interpolated by eye. The previous 1280px query was
+   invented and matched nothing in the project.
+     phone   <= 809
+     tablet  810 - 1199
+     desktop >= 1200
+   Heading 3 is the one exception: it is unused on the homepage so Framer never
+   emits it at these widths. Its values below are bracketed between Heading 2
+   (51/40/25) and Heading 4 (25/21/18), which sit either side of it at 40. */
+/* ---- STACKED LAYOUT --------------------------------------------------
+   Applied by ASPECT RATIO, not width. The desktop composition needs
+   horizontal room BESIDE the orb — the rail down the right, the label in the
+   gap between them — so what decides it is the shape of the frame, not how
+   many pixels wide it is. A landscape iPad has that room; a 1000x1060 desktop
+   window does not, even though both sit under 1200.
+
+   The TYPE SCALE stays on Framer's width breakpoints below, because that is
+   what Framer itself does. Layout and type are separate questions.
+
+   `.stacked` is toggled in alignUnit, which now runs on any viewport change. */
+
+  /* 85% of the content column. 22ch was invented and resolved to the full
+     column at phone width, so the title was effectively unconstrained. 85% is
+     a value the project already uses at desktop. */
+  .stacked .headline{left:var(--gutter);right:var(--gutter);top:var(--pad-t);
+            max-width:calc((100% - var(--gutter) * 2) * 0.85)}
+
+  /* 52, not 72 — the ticks only ever reach 27, so the extra 20px was empty
+     container held above the figure and taken out of the orb's band. */
+  .stacked .rail{left:var(--gutter);right:var(--gutter);width:auto;
+        top:var(--rail-y);bottom:auto;height:52px}
+  .stacked .rail i{left:0;right:auto;top:auto;bottom:0;width:1px;height:64px;
+          transform-origin:50% 100%}
+  /* The mark spans the rail's full height so `bottom:100%` on its label means
+     "clear of the ticks" rather than "1px above the baseline" — otherwise the
+     sentence lands straight on top of the tick field. */
+  .stacked .rail i.mark{width:1px;height:100%}
+  .stacked .rail i.mark b{left:0;right:auto;top:auto;bottom:0;
+                 width:1px;height:220px;transform-origin:50% 100%}
+  /* Anchored to the mark's foot, NOT to the top of the rail — setRail lifts it
+     to the tip of the leader each frame, so it rises and falls as the line
+     grows and shortens. Pinned to `calc(100% + 16px)` it could never move. */
+  .stacked .rail i.mark span{left:50%;right:auto;top:auto;bottom:0;
+                    text-align:center;white-space:nowrap}
+
+  .stacked .readout{left:var(--gutter);right:var(--gutter);bottom:auto;top:var(--readout-y)}
+  .stacked .caption{left:var(--gutter);right:var(--gutter);text-align:left;
+           bottom:var(--pad-b);max-width:none}
+
+:root{--rail-y:56%; --readout-y:70%}
+/* Bottom padding matches the SIDE padding when stacked. At 96 the foot of the
+   page carried three times the inset of its own margins. */
+.stacked{--pad-b:24px}
+@media (max-width:809px){:root{--rail-y:54%; --readout-y:66%}}
+
+@media (max-width:1199px){:root{
+  --f-display-mono:82px;   /* Mono       102 -> 82 */
+  --f-h2:40px;             /* Heading 2   51 -> 40 */
+  --f-h3:32px;             /* Heading 3   40 -> 32  (interpolated) */
+  --f-h4:21px;             /* Heading 4   25 -> 21 */
+  --f-small:14px;          /* Small       14 -> 14 */
+  --f-mini:12px;           /* Mini        12 -> 12 */
+}}
+@media (max-width:809px){:root{
+  --f-display-mono:65px;   /* Mono        82 -> 65 */
+  --f-h2:25px;             /* Heading 2   40 -> 25 */
+  --f-h3:21px;             /* Heading 3   32 -> 21  (interpolated) */
+  --f-h4:18px;             /* Heading 4   21 -> 18 */
+  --f-small:12px;          /* Small       14 -> 12 */
+  --f-mini:11px;           /* Mini        12 -> 11 */
+}}
 </style>
 </head>
 <body>
@@ -338,9 +411,18 @@ aligned patients</span>
   /* --gutter is now a max()/calc() expression; parseFloat cannot evaluate it,
      so it is measured off the rail's own resolved position instead. */
   let GUTTER = 24
+  /* Below 1200 the rail lies on its side. Its arithmetic is untouched — the
+     same scale, the same hill, the same marks — only the axis it draws along
+     and the length it measures against are swapped. */
+  /* Stacked when the frame is portrait-ish, or simply too narrow to seat the
+     rail beside the orb. 1.15 rather than 1.0 because a barely-landscape
+     window still has no usable gap between the body and the right margin;
+     the 900 floor keeps a landscape PHONE (844x390) stacked, where the frame
+     is wide but far too short for the vertical rail. */
+  const HZ = () => (innerWidth / innerHeight) < 1.15 || innerWidth < 900
   function readGutter(){
     const r = railEl.getBoundingClientRect()
-    GUTTER = Math.round(innerWidth - r.right)
+    GUTTER = Math.round(HZ() ? r.left : innerWidth - r.right)
   }
   const LEAD_GAP = 22                        // breathing room between text and leader
   /* Every tick is a FIXED month, so as the count runs up a given month falls
@@ -365,6 +447,20 @@ aligned patients</span>
   const RAIL_S = 3
   const RAIL_POOL = 80
   const RAIL_W = 30, RAIL_BUMP = 34
+  /* Stacked layout: shorter ticks, and the MARK is the anchor. On desktop the
+     mark's length comes from `reach`, which is built from the horizontal gap
+     between the orb and the rail — geometry that does not exist once the rail
+     lies on its side, so it clamped to ~48px and came out SHORTER than the
+     64px peak ticks. Here it is set outright, and set taller than any tick. */
+  const RAIL_W_H = 10, RAIL_BUMP_H = 17
+  /* The leader obeys the hill here exactly as it does on desktop: longest at
+     the crown, drawing back toward the rail as the mark travels away from it.
+     The minimum still clears the tallest tick (34px), so the mark is always
+     the anchor. */
+  /* The leader is shorter and the sentence sits closer to it. The minimum
+     still clears the tallest tick (27), which is what keeps the mark reading
+     as the anchor rather than just another stroke. */
+  const MARK_MIN_H = 32, MARK_SPAN_H = 18, MARK_GAP_H = 10
   const MARK_M = [6, 54]
   const railEl = document.getElementById("rail")
   const railEls = []
@@ -392,7 +488,8 @@ aligned patients</span>
      0.2744em below the column top (the window runs 17.7%-82.3% of 1.55em). */
   const unitEl = document.getElementById("odounit")
   const readoutEl = document.querySelector(".readout")
-  const railGeom = { top: 0, h: 1 }, markW = []
+  const railGeom = { top: 0, h: 1, left: 0, w: 1 }, markW = []
+  const seenVP = { w: -1, h: -1 }   // viewport alignUnit last measured against
   const subEl = document.querySelector(".readout .unit")
   function baselineIn(el){
     // nowrap is not cosmetic: inside a collapsed column the probe wraps to a
@@ -432,7 +529,22 @@ aligned patients</span>
   }
 
   function alignUnit(){
+    seenVP.w = innerWidth; seenVP.h = innerHeight
+    /* ONE source of truth for the layout mode. The scene used to run its own
+       innerWidth test, which disagreed with this one the moment the rule
+       became ratio-based — the DOM laid out for desktop while the orb still
+       believed it was stacked. */
+    scroll.stacked = HZ()
+    document.documentElement.classList.toggle("stacked", scroll.stacked)
     readGutter()
+    /* Clear any inline placement left by a previous breakpoint. Without this,
+       resizing tablet -> desktop carries the stacked layout's inline bottoms
+       and right-alignment across and corrupts the desktop composition. */
+    caption.style.left = caption.style.right = caption.style.bottom = ""
+    caption.style.textAlign = caption.style.maxWidth = ""
+    readoutEl.style.top = readoutEl.style.bottom = ""
+    railEl.style.top = railEl.style.bottom = ""
+    scroll.orbY = 0.5; scroll.orbX = 0.5; scroll.orbDia = 0   // overridden below
     // the LAST column is the tenths — it is never the one that collapses
     const cols = odo.querySelectorAll(".odo-col")
     const col = cols[cols.length - 1], cell = col && col.querySelector("i")
@@ -449,9 +561,100 @@ aligned patients</span>
        as unaligned. Measured on a detached probe — baselineIn() forces nowrap,
        which is correct for a one-line digit cell and destroys a wrapped
        paragraph, collapsing it to a single line that does not exist. */
-    /* One line across the foot of the frame: the figure, its descriptor and
-       the description opposite all sit on the timeline's bottom tick. Both
-       groups move to the rail — the rail is the datum, not the text. */
+    /* Desktop only. This baseline-aligns the caption and the figure to the
+       RAIL'S FOOT, which is a relationship that only exists when the rail is a
+       vertical column down the right-hand side. In the stacked layout the rail
+       is a horizontal strip partway down the page, and aligning to its bottom
+       drags both text blocks up on top of it. */
+    /* MEASURE FIRST. railGeom and the label widths are needed in BOTH layouts;
+       leaving them below the stacked-layout early return meant the rail kept
+       its initial h/w of 1 on mobile and collapsed to two ticks at the edge. */
+    const rg = railEl.getBoundingClientRect()
+    railGeom.top = rg.top;  railGeom.h = rg.height
+    railGeom.left = rg.left; railGeom.w = rg.width
+    if (HZ()){
+      caption.style.transform = "none"
+      readoutEl.style.transform = "none"
+      /* Stack the lower group UPWARD from the padding line with fixed gaps.
+         Positioning it by percentage while the caption stays pinned to the
+         bottom means the space between them grows with the viewport — which
+         is why iPad looked like it had an enormous bottom margin when the
+         padding itself (48/96, unchanged across Framer's breakpoints) was
+         correct all along. Fixed gaps keep the cluster tight at any height and
+         hand the slack to the region above, where the orb lives. */
+      const padB = parseFloat(getComputedStyle(document.documentElement)
+                     .getPropertyValue("--pad-b")) || 96
+      const GAP_CAP = 40, GAP_RAIL = 32   // the rail belongs to the figure
+      const capH = caption.getBoundingClientRect().height
+
+      /* One unconditional stack, built upward from the padding line: caption,
+         then the figure a fixed gap above it, then the rail a fixed gap above
+         that. The previous version put the caption INSIDE the padding band and
+         needed a fallback for when it no longer fitted — a branch that would
+         only ever fire on a device nobody tested. There is nothing to guard
+         here: every element sits above the padding line by construction. */
+      /* iPad is wide enough to set the caption beside the figure rather than
+         under it, the way desktop does — which also lifts it out of the
+         vertical stack and hands its height back to the orb. Phone keeps it
+         stacked, because at 390 a side-by-side split leaves neither column a
+         usable measure. */
+      const sideBySide = innerWidth > 809
+      caption.style.bottom = padB + "px"
+      if (sideBySide){
+        caption.style.left = "auto"
+        caption.style.right = GUTTER + "px"
+        caption.style.textAlign = "right"
+        caption.style.maxWidth = "44%"
+      }
+      const stackBase = sideBySide ? padB : padB + capH + GAP_CAP
+      readoutEl.style.top = "auto"
+      readoutEl.style.bottom = stackBase.toFixed(0) + "px"
+      const rdH = readoutEl.getBoundingClientRect().height
+      railEl.style.top = "auto"
+      railEl.style.bottom = (stackBase + rdH + GAP_RAIL).toFixed(0) + "px"
+      // the rail just moved — re-measure, or setRail works off stale geometry
+      const rg2 = railEl.getBoundingClientRect()
+      railGeom.top = rg2.top;  railGeom.h = rg2.height
+      railGeom.left = rg2.left; railGeom.w = rg2.width
+
+      /* The orb is FITTED to the gap that is actually left, rather than placed
+         at a fixed fraction of viewport height and sized at another. Both were
+         chosen independently of where the rail ends up, so nothing ever checked
+         they do not collide — and on a 390x844 phone they overlapped by 50px.
+         RESERVE is the leader at full stretch plus its gap plus a line of
+         label, i.e. the tallest the rail's furniture can ever be. */
+      /* RESERVE is measured from the rail's TOP, not its foot. 112 is the
+         label's clearance above the FOOT (leader 78 + gap 14 + a line of type)
+         — but the rail is 72px tall, so above its top the label only reaches
+         about 45. Reserving 112 threw away 67px that was never occupied, and
+         all of it came off the bottom of the band, pushing the orb up against
+         the title. BREATHE is folded into FILL so the gap above and below the
+         body is symmetric by construction. */
+      const RESERVE = 40, BREATHE = 0, FILL = 0.84
+      /* Measured against the TALLEST title — scene 3's, which runs to three
+         lines where scene 2's runs to two. Taking the live headline instead
+         means the band changes size when the title swaps, so the orb would
+         jump between scenes. Show the scene 3 lines, measure, put it back. */
+      const hEl = document.querySelector(".headline")
+      const wasD = [l1a, l1b, line2].map(e => e.style.display)
+      l1a.style.display = "none"; l1b.style.display = "block"; line2.style.display = "block"
+      const titleBottom = hEl.getBoundingClientRect().bottom
+      ;[l1a, l1b, line2].forEach((e, i) => { e.style.display = wasD[i] })
+
+      const bandTop = titleBottom + BREATHE
+      const bandBot = rg2.top - RESERVE
+      scroll.orbY   = ((bandTop + bandBot) / 2) / innerHeight
+      /* Capped against the COLUMN as well as the band. With the caption out of
+         the stack the band grows a lot, and an orb sized purely from it would
+         run past the gutters. */
+      /* Capped by the COLUMN as well as the band, and with no floor: on an
+         exceptionally short screen the band collapses and the orb shrinks with
+         it rather than being held at a minimum size and punching through the
+         timeline. */
+      const colW = innerWidth - 2 * GUTTER
+      scroll.orbDia = Math.max(Math.min((bandBot - bandTop) * FILL, colW * 0.78), 0)
+      return
+    }
     const foot = railEl.getBoundingClientRect().bottom
     caption.style.transform = "none"
     const capBase = caption.getBoundingClientRect().bottom - descentOf(caption)
@@ -465,18 +668,49 @@ aligned patients</span>
        synchronous layout every single frame — that is the stutter, and it got
        worse the moment the ticks started writing width as well as top. None of
        these values change unless the viewport does. */
-    railGeom.top = railEl.getBoundingClientRect().top
-    railGeom.h   = railEl.getBoundingClientRect().height
     markEls.forEach((e, i) => {
       const prev = e.style.display
       e.style.display = "block"
       markW[i] = e.lastElementChild.offsetWidth
       e.style.display = prev
     })
+
+    /* DESKTOP FIT. The orb's size here comes from the field of view and the
+       viewport HEIGHT, with nothing checking the horizontal room — so on a
+       shorter, narrower desktop-layout frame (a landscape iPad, say) it grew
+       straight through the headline. Fitted to the gap that actually exists
+       between the title and the rail's label, and to the gap between the title
+       and the figure. Capped at 1 in the scene so it only ever shrinks: the
+       natural size carries the true 8.36x ratio against dot 1 and must never
+       be exceeded. */
+    const hl = document.querySelector(".headline").getBoundingClientRect()
+    const railX = innerWidth - GUTTER - 30
+    const labelW = Math.max(markW[0] || 0, markW[1] || 0) || 200
+    /* INTERVENE ONLY ON A COLLISION. The gap is not centred on the viewport —
+       the headline holds the left, the rail and its label the right — but that
+       only matters when the body would actually run into something. Recentring
+       unconditionally moved the orb 121px right on a 1512 desktop, changing a
+       composition that was already correct. Screen-centred is the default; the
+       gap is used only to rescue a frame that cannot hold it. */
+    const gapL = hl.right + 24
+    const gapR = railX - labelW - 40
+    const fpxV = (innerHeight / 2) / Math.tan(38 * Math.PI / 360)
+    const natR = fpxV / 6.4                     // radius at rest, natural size
+    const cxV  = innerWidth / 2
+    const fits = (cxV - natR) >= (hl.right - 4) && (cxV + natR) <= (railX - labelW)
+
+    if (fits){
+      scroll.orbX = 0.5; scroll.orbDia = 0      // 0 => leave the natural size alone
+    } else {
+      const maxDown = (readoutEl.getBoundingClientRect().top - hl.bottom) * 0.92
+      scroll.orbX   = ((gapL + gapR) / 2) / innerWidth
+      scroll.orbDia = Math.max(Math.min(gapR - gapL, maxDown), 80)
+    }
   }
 
   function setRail(months){
-    const H = railGeom.h
+    // length along the rail's own axis, and where the head sits on it
+    const H = HZ() ? railGeom.w : railGeom.h
     /* ORIENTATION (the comments used to describe the pre-flip layout):
          y = headY + (m - months) * pxPerMonth,  headY = H/2,  px = span/months
          m = 0        -> y = 0     month zero is PINNED at the TOP, always
@@ -487,7 +721,8 @@ aligned patients</span>
     /* The orb sits at (0,0,z) on a camera looking straight down -Z, so it
        projects to EXACTLY innerHeight/2. Anything else and the leader line
        leaves the rail above the dot it is supposed to be pointing at. */
-    const headY = innerHeight * 0.5 - railGeom.top
+    const headY = HZ() ? (innerWidth * 0.5 - railGeom.left)
+                       : (innerHeight * 0.5 - railGeom.top)
     /* Scale off the distance from the TOP to the head, not from the head to
        the foot. That is what puts month zero exactly on y = 0:
            m = 0  ->  headY - months * (headY / months)  =  0
@@ -516,7 +751,7 @@ aligned patients</span>
     /* Measured against the orb at its RESTING size, not its live size. Tracking
        the live edge made the label drift sideways while it descended — it has
        to fall straight down. */
-    const orbRight = innerWidth / 2 + fpx / 6.4
+    const orbRight = innerWidth * (scroll.orbX || 0.5) + fpx / 6.4
     const railX = innerWidth - GUTTER - 30                 // left edge of the ticks
 
     /* ONE ramp drives both labels. Two separate windows — out over 0.54-0.74,
@@ -548,10 +783,18 @@ aligned patients</span>
          away from it. The sentence rides the line rather than sitting at a
          fixed column. Transforms only — see the note on .rail. */
       const reach = 30 + pad * (0.52 + 0.48 * hill(y, H))
-      const lineLen = Math.max(reach - LEAD_GAP, 24)
-      e.style.transform = `translate3d(0,${y.toFixed(1)}px,0)`
-      e.firstElementChild.style.transform = `scaleX(${(lineLen / 300).toFixed(4)})`
-      sp.style.transform = `translate3d(${(-reach).toFixed(1)}px,-50%,0)`
+      const lineLen = HZ() ? MARK_MIN_H + MARK_SPAN_H * hill(y, H)
+                           : Math.max(reach - LEAD_GAP, 24)
+      if (HZ()){
+        e.style.transform = `translate3d(${y.toFixed(1)}px,0,0)`
+        e.firstElementChild.style.transform = `scaleY(${(lineLen / 220).toFixed(4)})`
+        // the sentence rides the tip of the leader
+        sp.style.transform = `translate3d(-50%,${-(lineLen + MARK_GAP_H).toFixed(1)}px,0)`
+      } else {
+        e.style.transform = `translate3d(0,${y.toFixed(1)}px,0)`
+        e.firstElementChild.style.transform = `scaleX(${(lineLen / 300).toFixed(4)})`
+        sp.style.transform = `translate3d(${(-reach).toFixed(1)}px,-50%,0)`
+      }
       e.style.opacity = o.toFixed(3)
       // blur-to-clear on arrival, the way Framer reveals text
       sp.style.filter = o > 0.995 ? "none" : `blur(${((1 - o) * 20).toFixed(2)}px)`
@@ -559,6 +802,11 @@ aligned patients</span>
     /* Reversed: month zero sits at the TOP and time runs downward, so as the
        count climbs every tick travels UP and out. The marks therefore rise
        into place from below rather than dropping in from above. */
+    /* At a RESTING scene there is nothing arriving, so nothing needs to fade.
+       The overscan ramp exists only to stop ticks popping into view while the
+       rail is travelling — held on at rest it just left the end stroke
+       translucent. Snapped to fully flush whenever the scroll has settled. */
+    const settled = Math.min(Math.abs(pz), Math.abs(pz - 0.5), Math.abs(pz - 1)) < 0.004
     let m = 0, used = 0
     for (; used < RAIL_POOL; m += RAIL_S) {
       const y = headY + (m - months) * pxPerMonth
@@ -575,9 +823,12 @@ aligned patients</span>
       const t = railEls[used++]
       if (t._on !== 1){ t.style.display = "block"; t._on = 1 }
       const ty = Math.round(y * 10) / 10
-      const tw = Math.round(RAIL_W + RAIL_BUMP * hill(y, H))
+      const tw = Math.round(HZ() ? RAIL_W_H + RAIL_BUMP_H * hill(y, H)
+                                 : RAIL_W   + RAIL_BUMP   * hill(y, H))
       if (t._y !== ty || t._w !== tw){
-        t.style.transform = `translate3d(0,${ty}px,0) scaleX(${(tw / 64).toFixed(4)})`
+        t.style.transform = HZ()
+          ? `translate3d(${ty}px,0,0) scaleY(${(tw / 64).toFixed(4)})`
+          : `translate3d(0,${ty}px,0) scaleX(${(tw / 64).toFixed(4)})`
         t._y = ty; t._w = tw
       }
       /* NO fade inside the frame. Month zero is pinned at exactly y = 0 and
@@ -587,9 +838,12 @@ aligned patients</span>
          pushed entirely OUTSIDE the frame, across the 12px of overscan the
          loop now allows, so a tick arriving from beyond the edge ramps up
          before it reaches the boundary rather than popping at it. */
-      const te = (y < 0 ? Math.max(0, 1 + y / 12)
-               :  y > H ? Math.max(0, 1 - (y - H) / 12)
-               :  1) * (1 - markMix)
+      const edge = settled
+        ? ((y < -2 || y > H + 2) ? 0 : 1)
+        : (y < 0 ? Math.max(0, 1 + y / 12)
+        :  y > H ? Math.max(0, 1 - (y - H) / 12)
+        :  1)
+      const te = edge * (1 - markMix)
       const teq = Math.round(te * 50) / 50
       if (t._e !== teq){ t.style.opacity = teq; t._e = teq }
     }
@@ -900,6 +1154,13 @@ aligned patients</span>
     const p = scroll.p;
 
     try{
+        /* Self-healing. Every measurement setRail depends on is taken in
+         alignUnit, so if that has not run since the viewport changed — a
+         resize event that never fired, a breakpoint crossed during load, an
+         orientation change — the rail runs on a stale width of 1 and collapses
+         to a single tick. Cheap to compare, and it re-measures at most once
+         per viewport change rather than per frame. */
+      if (seenVP.w !== innerWidth || seenVP.h !== innerHeight){ alignUnit(); layoutStagger() }
       setOdometer(p);
       /* GEOMETRIC, not linear. Tick spacing is span/months — a 1/x curve — so
        stepping the month COUNT evenly compresses the rail violently at the
