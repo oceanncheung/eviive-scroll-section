@@ -697,7 +697,16 @@ aligned patients</span>
     const fpxV = (innerHeight / 2) / Math.tan(38 * Math.PI / 360)
     const natR = fpxV / 6.4                     // radius at rest, natural size
     const cxV  = innerWidth / 2
-    const fits = (cxV - natR) >= (hl.right - 4) && (cxV + natR) <= (railX - labelW)
+    /* The headline sits at the TOP of the frame; the orb is vertically centred.
+       Testing their horizontal extents alone reports a collision that cannot
+       happen - and on a wide viewport the gutter pushes the headline far right,
+       so it fired constantly. When it fires, orbX, orbDia AND the label's leader
+       length are all recomputed from a gap that is not real: the orb drifts
+       right, changes size, and the label slides toward the rail. Require an
+       actual vertical overlap before believing the horizontal one. */
+    const orbTopV  = innerHeight / 2 - natR
+    const clearsHl = (cxV - natR) >= (hl.right - 4) || hl.bottom <= orbTopV
+    const fits = clearsHl && (cxV + natR) <= (railX - labelW)
 
     if (fits){
       scroll.orbX = 0.5; scroll.orbDia = 0      // 0 => leave the natural size alone
