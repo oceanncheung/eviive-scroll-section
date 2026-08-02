@@ -226,7 +226,13 @@ def main():
     css_scoped, dropped = transform_css(
         re.search(r"<style[^>]*>(.*?)</style>", html, re.S).group(1)
     )
-    css_scoped = css_scoped.replace("height:300vh", "height:200vh")
+    # .pin stays 300vh for TWO states, deliberately. Travel is pinH - vh =
+    # 200vh: state 1 at offset 0, state 2 at offset 100vh, and a further
+    # 100vh of DWELL in which the section is still pinned. Without that
+    # dwell the last snap point coincided exactly with the last pinned
+    # position, so arriving at state 2 left zero headroom - any momentum
+    # unpinned the section and slid it away while the 2.6s animation was
+    # still running. The animation needs somewhere to happen.
     # The nav is opaque and fixed. The BACKGROUND runs full bleed behind it -
     # that is what makes the section own the screen - while only the CONTENT is
     # inset below it. .sticky therefore stays 100vh, and the two top-anchored
