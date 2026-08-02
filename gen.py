@@ -663,10 +663,10 @@ export default function mount(host) {{
      ordinary scrolling resume. During a transition every input is swallowed —
      the animation is not something the reader can outrun.
 
-     This is scroll-jacking and it is chosen, not accidental. It is confined to
-     the moments the section owns the viewport, every listener is removed on
-     unmount, and a watchdog releases the lock if anything ever fails, so the
-     worst case is ordinary scrolling rather than a page that cannot move.
+     Input is only ever taken for the ~620ms of a glide, plus one deliberate
+     hold: at EVIIVE the reader waits for the transition before continuing to the
+     next section. Scrolling back is never blocked. A watchdog releases the lock
+     if anything fails, so the worst case is ordinary scrolling.
 
      A wheel gesture is dozens of events. Handling each one would fire every
      step at once, so after acting we swallow the rest of the burst until the
@@ -731,12 +731,17 @@ export default function mount(host) {{
     return "away"
   }}
 
-  const unlock = () => {{ locked = false; clearTimeout(guardT) }}
+  const unlock = () => {{
+    locked = false
+    window.__eviiveDriving = false
+    clearTimeout(guardT)
+  }}
 
-  const glideTo = (y, targetP, hold) => {{
+  const glideTo = (y) => {{
     const from = scrollY
     const t0 = performance.now()
     locked = true
+    window.__eviiveDriving = true      // the quantiser must not fight us
     clearTimeout(guardT)
     guardT = setTimeout(unlock, GUARD_MS)          // never trap the reader
     if (raf) cancelAnimationFrame(raf)
@@ -748,25 +753,22 @@ export default function mount(host) {{
         return
       }}
       scrollTo(0, y)                 // asymptotic curve: land it exactly
+      window.__eviiveDriving = false
       raf = 0
-      /* Only the EVIIVE transition is uninterruptible. Waiting on the scene for
-         BOTH steps meant arriving at 6.4 swallowed every input for as long as
-         the driver's 2.6s tween took to land - which is why scrolling back up
-         felt impossible. Reaching the first state releases as soon as the
-         scroll itself is done. */
-      if (!hold) return unlock()
-      const settle = () => {{
-        if (Math.abs(progress() - targetP) < 0.005) return unlock()
-        raf = requestAnimationFrame(settle)
-      }}
-      settle()
+      unlock()
     }}
     raf = requestAnimationFrame(step)
   }}
 
   const goto = (i) => {{
     idx = i
-    glideTo(states()[i], i === 0 ? 0.5 : 1, i === 1)
+    /* Start the scene on THIS frame. Left to itself the driver infers the state
+       from scroll position, which the spring only reaches half way through the
+       glide — so the page moved first and the animation joined a beat later,
+       reading as a stall. */
+    const api = window.__eviive
+    if (api && api.to) api.to(i === 0 ? 0.5 : 1)
+    glideTo(states()[i])
   }}
 
   const cool = () => {{
@@ -795,7 +797,14 @@ export default function mount(host) {{
     if (idx === null) idx = progress() >= 0.75 ? 1 : 0
     if (dir > 0) {{
       if (idx === 0) {{ cool(); goto(1); return true }}
-      return false                                  // done — scroll on normally
+      /* THE ONLY WAIT. Once at EVIIVE the reader cannot go on to the next
+         section until the transition has landed — that is the whole of the
+         rule. Everything else stays free: the trip in is a normal glide, and
+         scrolling back up works at any moment, including mid-animation. An
+         earlier version swallowed every input from the instant the gesture
+         fired, which is why both steps felt dead. */
+      if (!settled()) {{ cool(); return true }}
+      return false                                  // landed — scroll on
     }}
     if (idx === 1) {{ cool(); goto(0); return true }}
     return false                                    // at the first state, go up

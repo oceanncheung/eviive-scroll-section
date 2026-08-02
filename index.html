@@ -1210,6 +1210,11 @@ nearly 4 years longer</span>
   const ENTER_AT = 0.75;   /* intro is finished this far into the approach */
 
   function readScroll(){
+    /* While the section's controller is gliding, IT owns the timeline. Without
+       this the quantiser would keep recomputing the target from the scroll
+       position and stamp out the head start below, so the scene could not begin
+       until the scroll had already travelled half way. */
+    if (window.__eviiveDriving) return;
     const r = pin.getBoundingClientRect();
     const travel = r.height - innerHeight;
 
@@ -1295,6 +1300,10 @@ nearly 4 years longer</span>
 
   /* Review hook — jump straight to a beat. */
   window.__eviive = {
+    /* Start the tween toward p RIGHT NOW. seek() teleports; this eases, so the
+       controller can begin the scene on the same frame as the gesture instead
+       of waiting for the scroll to reach the threshold that implies it. */
+    to(p){ from = scroll.p; target = p; t0 = performance.now(); return p },
     seek(v){ target = from = scroll.p = clamp(v,0,1); t0=-1e9; return scroll.p; },
     get progress(){ return scroll.p; },
     states:{a:0,b:1}
