@@ -172,14 +172,6 @@ export default function mount(host) {
   const home = () => Math.round(pinEl.getBoundingClientRect().top + scrollY)
   const states = () => [home(), home()]
 
-  /* Fraction of the viewport the section currently occupies, from either side. */
-  const seen = () => {
-    const r = pinEl.getBoundingClientRect()
-    if (r.top > 0) return (innerHeight - r.top) / innerHeight
-    if (r.bottom < innerHeight) return r.bottom / innerHeight
-    return 1
-  }
-
   /* Catch a gesture that began before the section existed on screen and would
      otherwise carry straight past it. Distinct from ARM_IN on purpose: ARM_IN is
      where a DELIBERATE flick - one begun with the section already in view - takes
@@ -307,6 +299,23 @@ export default function mount(host) {
       return false                                // at 6.4 heading up - let them
     }
 
+    /* THE OVERSHOOT CATCH - history, not geometry. With one viewport and no
+       pinned travel, "inside" is a single scroll position and the rescue band
+       is ~a quarter viewport; a violent flick moves 300-400px PER EVENT and
+       steps clean over both between two events. Once past, "leaving + down =
+       let them go" waved the whole tail through - that rule was written for a
+       reader RELEASED from EVIIVE, and position alone cannot tell them from a
+       reader who was never captured. `spent` can: it is true only after a
+       release this visit. Not spent + home already crossed + still heading
+       down = an overshoot, whatever the coverage says - catch it and settle
+       back onto the sticky position. Reproduced before this fix: 23 events,
+       none consumed, 1350px past the section. */
+    const rc = pinEl.getBoundingClientRect()
+    if (!spent && dir > 0 && rc.top < -2 && rc.bottom > 40) {
+      engage(progress() >= 0.75 ? 1 : 0, true)
+      return true
+    }
+
     const z = zone()
     if (z === "away") { idx = null; return false }
     if (z === "approach") {
@@ -370,7 +379,15 @@ export default function mount(host) {
     }
     accum += e.deltaY
     if (Math.abs(accum) < TOLERANCE) return
-    if (!deliberate && !engaged && seen() < RESCUE_IN) return   // still theirs
+    /* Leak an undeliberate gesture only while the section is still genuinely
+       approaching: top edge below the fold AND coverage under RESCUE_IN. The
+       old test read coverage alone, which falls back under the threshold once
+       the section has been overshot - so a burst that stepped over it kept
+       leaking forever and the controller never heard about it. Once home has
+       been crossed every event reaches onStep, which owns the catch. */
+    const rt = pinEl.getBoundingClientRect().top
+    if (!deliberate && !engaged && rt > 0 &&
+        (innerHeight - rt) / innerHeight < RESCUE_IN) return
     const before = engaged
     if (fire(accum > 0 ? 1 : -1, e)) { armed = false; ours = true }
     else if (before) armed = false     // that WAS the decision: they are leaving
@@ -391,7 +408,9 @@ export default function mount(host) {
     touchY = y
     if (!armed) { if (ours) e.preventDefault(); return }
     if (Math.abs(touchAcc) < 30) return
-    if (!deliberate && !engaged && seen() < RESCUE_IN) return
+    const rtt = pinEl.getBoundingClientRect().top
+    if (!deliberate && !engaged && rtt > 0 &&
+        (innerHeight - rtt) / innerHeight < RESCUE_IN) return
     if (fire(touchAcc > 0 ? 1 : -1, e)) { armed = false; ours = true }
   }
 

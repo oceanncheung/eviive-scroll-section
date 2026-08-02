@@ -188,6 +188,17 @@ guess.
   speed), ages out after 120ms of quiet, and the spring hard-lands at 0.5px
   because springs never arrive on their own. Integer pixels throughout.
 
+  **The overshoot catch is HISTORY, not geometry.** With one viewport and no
+  pinned travel, "inside" is a single scroll position and the rescue band is a
+  quarter viewport; a violent flick moves 300-400px PER EVENT and steps clean
+  over both between two events. No positional threshold can survive that - what
+  distinguishes "reader released from EVIIVE, walking out" from "reader never
+  captured, blown past" is history, and it lives in `spent`. Not spent + home
+  crossed + still heading down = catch and settle back. Reproduced before the
+  fix: 23 events, none consumed, 1350px past; after: stopped exactly at the
+  sticky position with a 103px momentary carry. If entry breaks again, look for
+  a rule inferring history from position - that was the root of every relapse.
+
   **Two capture triggers, and they are not the same.** `ARM_IN` is where a
   *deliberate* flick takes hold — one begun with the section already in view.
   `RESCUE_IN` is a backstop for a flick begun before the section existed on
