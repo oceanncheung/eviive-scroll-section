@@ -1199,7 +1199,12 @@ nearly 4 years longer</span>
      thirds of the move and is still visibly travelling at 85%, which is what
      mass actually does. */
   const EASE=bezierEasing(0.37,0,0.63,1);
-  const DUR=2600;   // long enough for the acceleration itself to be legible
+  /* 2600 was tuned when the reader could still scroll during it. Now the
+     controller LOCKS input until this lands, so its length is dead time on the
+     page - 600ms of scroll followed by two seconds of nothing, which reads as
+     stuck rather than weighty. 1500 keeps the acceleration legible while the
+     hold stays inside what a reader will sit through. */
+  const DUR=1500;
   let target=0, from=0, t0=-1e9;
 
   const ENTER_AT = 0.75;   /* intro is finished this far into the approach */

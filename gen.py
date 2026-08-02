@@ -672,7 +672,11 @@ export default function mount(host) {{
      step at once, so after acting we swallow the rest of the burst until the
      reader has been still for COOL_MS. */
   const STEP_MS  = 620          // spring is home well before this
-  const COOL_MS  = 160          // quiet time that ends one gesture
+  /* Trackpad momentum keeps firing wheel events long after the fingers lift,
+     and 160ms of quiet was short enough that one flick was read as two - which
+     is the overshoot straight past EVIIVE. The timer restarts on every swallowed
+     event, so this is 400ms after the LAST event of a burst, not 400ms total. */
+  const COOL_MS  = 400
   const GUARD_MS = 6000         // watchdog: never stay locked forever
 
   /* A CRITICALLY DAMPED SPRING, not a bezier.
@@ -712,7 +716,12 @@ export default function mount(host) {{
      middle of the screen first — until then scrolling is ordinary, and the
      hand-off reads as a decision rather than an ambush. Applied symmetrically
      so coming back up behaves the same way. */
-  const CATCH_AT = 0.5
+  /* 0.5 meant the first gesture after the section appeared was spent scrolling
+     natively and only the second one glided in - the wasted scroll. 0.85 catches
+     it once about a sixth of the section is showing, so the first gesture IS the
+     motion. It does not skip the previous section the way 1.0 did, because the
+     spring leaves from rest and reads as a continuation rather than a jump. */
+  const CATCH_AT = 0.85
 
   const zone = () => {{
     const r = pinEl.getBoundingClientRect()
