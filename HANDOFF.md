@@ -151,7 +151,11 @@ guess.
 
 - Section on the homepage, opens on 6.4 months
 - The **approach** holds progress at 0 — the section rises as a plain dark band
-  under ordinary scrolling and nothing animates. The reveal is a reward for
+  under ordinary scrolling and nothing animates. At p = 0 dot 1's alpha is 0;
+  it FADES IN over p 0→0.12 while the focus plane still sits 2.8 units in front
+  of it, so it arrives as a soft unresolved presence and sharpens as the camera
+  closes (the scene's designed "arrival" beat). Do not reintroduce a scale
+  gate there — scale 0 → full in one frame is a pop, and Ocean rejected it. The reveal is a reward for
   arriving, not something the reader watches happen sideways. `index.html` still
   scrubs the approach when opened standalone; `__eviiveOwned` suppresses that in
   the embedded build

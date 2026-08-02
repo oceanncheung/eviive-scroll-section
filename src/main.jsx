@@ -401,13 +401,17 @@ function Orb() {
     const fit = narrow
       ? (fitted !== null ? fitted : 0.52)
       : (fitted !== null ? Math.min(fitted, 1) : 1)
-    /* Before the reveal is triggered the body is worth zero months, and at
-       1 unit = 1 month that is a six-pixel grey dot in the middle of an
-       otherwise empty field - it reads as a dead pixel, not as a cohort waiting
-       to be counted. The section now holds at p = 0 for the whole approach, so
-       that state is on screen for real rather than flashing past. Hide it, and
-       let it grow in with the odometer. */
-    mesh.current.scale.setScalar(scroll.p < 0.015 ? 0 : o.r * breath * fit)
+    /* Dot 1 ARRIVES, it does not appear. The section holds at p = 0 through
+       the whole approach, so that state is genuinely on screen - and a scale
+       gate there made the body pop from nothing to full in a single frame the
+       moment the reveal began. Instead it fades in over the first stretch of
+       the leg, during which the focus pull above still has the plane sitting
+       well in front of the body: it enters as a soft unresolved presence and
+       sharpens as the camera closes, which is the arrival the scene was
+       designed around (see "0.0 arrival - dot 1 soft" in the Rig). At p = 0
+       the alpha is zero, so the empty-field dead-pixel state cannot exist. */
+    u.uAlpha.value = smoothstep(0, 0.12, scroll.p)
+    mesh.current.scale.setScalar(o.r * breath * fit)
   })
 
   return (
