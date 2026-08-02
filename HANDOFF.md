@@ -154,15 +154,26 @@ guess.
   odometer counts up and the orb settles as the section rises into view
 - One deliberate scroll → 53.5 months, on a 2.6s weighted tween
 - **No CSS scroll-snap at all.** It offers no control over duration or easing, so
-  the module runs a discrete controller: one gesture from the previous section
-  lands on 6.4 months, one more goes to EVIIVE. `CATCH_WHEN_IN` 0.8 (the section
-  must be 80% into the viewport, measured predictively from wheel velocity,
-  before it captures), `STEP_MS` 620, cooldown bounded 420–850ms, `OMEGA` 8.
-  Page motion is a critically damped spring seeded with the gesture's own
-  velocity, so it continues the reader's movement rather than restarting it.
-  There is **one** gate, on the way out of EVIIVE only: input is swallowed until
-  `settled()`. Nothing is locked on scene 1 or on the way in. A 6s watchdog
-  releases if anything fails
+  the module runs a discrete controller. The sequence: the section rises under
+  ordinary scrolling with the scene held at `p = 0`; one flick glides it to fill
+  the viewport and *then* plays the 6.4 reveal; one more flick goes to EVIIVE.
+  `ARM_IN` 0.25, `GESTURE_GAP` 140ms, `TOLERANCE` 24, glide 340–560ms scaled by
+  distance, easing `1 - (1-t)^5`, scene `DUR` 900ms. One gate only, on the way
+  out of EVIIVE. A 6s watchdog releases if anything fails.
+
+  **Read the gesture, never the event.** One trackpad flick is 30–60 wheel
+  events across ~1s — a finger burst plus an OS-synthesised momentum tail, and
+  [there is no API to tell them apart](https://github.com/w3c/pointerevents/issues/553).
+  Every cooldown short enough to feel responsive is shorter than that tail, so
+  its leftovers fire a second step. A gesture therefore ends with SILENCE: an
+  event opens a new one only after `GESTURE_GAP` of quiet, and the clock
+  advances on swallowed events too. The decision is taken once, on a gesture's
+  first event. Do not reintroduce a cooldown; it cannot work.
+
+  **One writer for `p`.** The controller sets `window.__eviiveOwned` and the
+  driver's `readScroll` bows out entirely. Two systems assigning one value on
+  the same frame was the jitter — `scrollTo` dispatches its scroll event
+  asynchronously, so the last one landed after the guard cleared
 - Background full-bleed behind the nav; headline and rail inset by `--nav-h`
 - Orb centred; layout driven by measured element width, not the window
 - Nav crossfades between the two headers, driven by the published theme
