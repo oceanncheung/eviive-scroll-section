@@ -171,62 +171,32 @@ guess.
   2.6s tween runs unlocked because `ours` swallows the gesture tail, `engaged`
   freezes the page, and a fresh flick retargets the tween mid-flight
   (`from = scroll.p`). The only wait is the at(1) exit gate leaving EVIIVE
-- **No CSS scroll-snap at all.** It offers no control over duration or easing, so
-  the module runs a discrete controller. The sequence: the section rises under
-  ordinary scrolling with the scene held at `p = 0`; one flick glides it to fill
-  the viewport and *then* plays the 6.4 reveal; one more flick goes to EVIIVE.
-  `ARM_IN` 0.25, `RESCUE_IN` 0.75, `GESTURE_GAP` 140ms, `TOLERANCE` 24. One
-  gate only, on the way out. A 6s watchdog releases if anything fails.
+- **No CSS scroll-snap at all.** The module runs THE STOP MODEL (Ocean's
+  design): natural scrolling ENDS one viewport above the section, the way a
+  page ends - everyone lands on "Our Platform" first, at rest. The next flick
+  performs a PRE-SET entrance: the section rises into the viewport over
+  `ENTER_MS` 1600ms on golden's own scene curve (bezierEasing(0.37, 0, 0.63,
+  1)), while the scene reveal is ALREADY playing, so dot 1 and the headline are
+  emerging during the rise and the dark board never sits empty. One more flick
+  → EVIIVE. One gate only, leaving EVIIVE before the morph lands. `GESTURE_GAP`
+  140ms, `TOLERANCE` 24, 6s watchdog.
 
-  **The entry glide is a critically damped spring seeded with the reader's own
-  scroll velocity** (Ocean's pick from five options: "continue the hand").
-  Closed form `x(t) = y + (d0 + (v0 + w·d0)t)e^(-wt)`, `OMEGA` 5/s (~1.2s
-  settle), stiffness adapting up to `w = v0/|d0|` (cap 60) so a fast hand is
-  absorbed by a stiffer catch instead of clamped - a clamp is a brake-slam,
-  measured at 17,800px/s of discontinuity. Hand-off discontinuity is now 0.
-  Velocity sampling attacks fast / releases smooth (symmetric EMAs lag a rising
-  speed), ages out after 120ms of quiet, and the spring hard-lands at 0.5px
-  because springs never arrive on their own. Integer pixels throughout.
-  **The launch is floored at 60% of the no-overshoot bound**: capture fires on a
-  gesture's first event, so raw sampling inherits the flick's slow beginning -
-  seeded that low the spring is neither snappy nor legibly easing out. Floored,
-  a gentle flick answers briskly (35% of travel in 150ms, 62% by 300ms) and
-  spends the last fifth arriving over ~900ms. Fast hands exceed the floor and
-  are untouched; the overshoot catch skips it (away-pointing samples) so its
-  settle-back stays gentle.
+  This replaced a velocity-continuous spring entry (sampler, snap floor,
+  adaptive stiffness - all deleted). The stop model is simpler by construction:
+  the page is at rest when the entrance begins, so there is no hand-off to
+  negotiate, and nothing can blow past the section because natural scroll
+  cannot cross the boundary. **The stop exists only AT or ABOVE itself**
+  (|scrollY - stop| <= 1, or crossing from above): a bare `scrollY >= stop` is
+  also true a viewport BELOW the section, and the moment a leaving reader
+  crossed the section's bottom the offered-again reset cleared `spent` and the
+  same flick's remaining events dragged them backwards into an entrance.
 
-  **The overshoot catch is HISTORY, not geometry.** With one viewport and no
-  pinned travel, "inside" is a single scroll position and the rescue band is a
-  quarter viewport; a violent flick moves 300-400px PER EVENT and steps clean
-  over both between two events. No positional threshold can survive that - what
-  distinguishes "reader released from EVIIVE, walking out" from "reader never
-  captured, blown past" is history, and it lives in `spent`. Not spent + home
-  crossed + still heading down = catch and settle back. Reproduced before the
-  fix: 23 events, none consumed, 1350px past; after: stopped exactly at the
-  sticky position with a 103px momentary carry. If entry breaks again, look for
-  a rule inferring history from position - that was the root of every relapse.
-
-  **Two capture triggers, and they are not the same.** `ARM_IN` is where a
-  *deliberate* flick takes hold — one begun with the section already in view.
-  `RESCUE_IN` is a backstop for a flick begun before the section existed on
-  screen, which would otherwise carry three viewports past it. Collapsing them
-  into one number breaks something either way: too low and the flick that
-  reveals the section also swallows it, so the reader never gets the beat where
-  they simply see it; too high and a hard throw sails by and the section never
-  happens. Both failures were observed.
-
-  **The odometer blur is duration-dependent.** It measures per-frame wheel
-  displacement, so it scales inversely with the scene tween's length. Shortening
-  DUR from 2600 to 900 tripled the blur and pinned it at its 9px ceiling — a
-  smear that resolves only at the end, i.e. "the number stutters before it
-  stays". At golden's 2600 the golden model is correct as written; the
-  compensation added while DUR was short has been deleted with the short DUR.
-  **If DUR ever changes, re-measure the blur against `golden/` first.**
-
-  **A consumed gesture owns its tail** (`ours`). A flick's momentum outlasts the
-  transition, and those leftovers used to reach the browser the instant `busy`
-  cleared and scroll the page back out of the section — which read both as the
-  section refusing to hold *and* as the reveal never playing.
+  **The overshoot catch survives as a safety net** (not spent + home crossed +
+  heading down = catch): the boundary makes it nearly unreachable, but if it is
+  ever bypassed - programmatic scrolls, anchors - the reader still cannot end
+  up past an unvisited section. Distinguish readers by HISTORY (`spent`), never
+  by position: position cannot tell "released from EVIIVE" from "never
+  captured", and that confusion caused every entry relapse.
 
   **Read the gesture, never the event.** One trackpad flick is 30–60 wheel
   events across ~1s — a finger burst plus an OS-synthesised momentum tail, and
