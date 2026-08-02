@@ -71,8 +71,18 @@ export default function mount(host) {
   }, 250)                                        // the nav can mount later
   setTimeout(() => clearInterval(navTimer), 6000)
 
+  const HINT_CSS =
+    ".eviive-hint{position:absolute;left:50%;top:0;width:22px;height:22px;" +
+    "margin-left:-11px;margin-top:-11px;color:rgba(248,246,242,0.8);opacity:0;" +
+    "transition:opacity .45s ease;pointer-events:none;z-index:6}" +
+    ".eviive-hint.on{opacity:1}" +
+    ".eviive-hint svg{width:100%;height:100%;display:block;" +
+    "animation:eviiveBob 2.6s ease-in-out infinite}" +
+    "@keyframes eviiveBob{0%,100%{transform:translateY(-4px)}" +
+    "50%{transform:translateY(4px)}}" +
+    "@media (prefers-reduced-motion: reduce){.eviive-hint svg{animation:none}}"
   const style = document.createElement("style")
-  style.textContent = CSS
+  style.textContent = CSS + HINT_CSS
   document.head.appendChild(style)
   host.innerHTML = MARKUP
   const pinEl = host.querySelector("#pin")
@@ -192,6 +202,33 @@ export default function mount(host) {
     return "away"
   }
 
+  /* THE SCROLL HINT. Ocean's spec: the site's own arrow (Phosphor ArrowDown,
+     regular - the exact glyph the Framer file's icon component lazy-loads from
+     phosphor-icons/ArrowDown@0.0.57), horizontally centred, vertically centred
+     in the peek band, bobbing slowly; gone the moment the reader acts. Colour
+     is the site's "Text - Light Tone". Bob is 2.6s and +/-4px - an invitation,
+     not a demand - and respects prefers-reduced-motion. */
+  const hint = document.createElement("div")
+  hint.className = "eviive-hint"
+  hint.innerHTML =
+    '<svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">' +
+    '<path d="M205.66,149.66l-72,72a8,8,0,0,1-11.32,0l-72-72a8,8,0,0,1,' +
+    '11.32-11.32L120,196.69V40a8,8,0,0,1,16,0V196.69l58.34-58.35a8,8,0,0,1,' +
+    '11.32,11.32Z"/></svg>'
+  host.appendChild(hint)
+
+  const updateHint = () => {
+    const r = pinEl.getBoundingClientRect()
+    /* Visible only while the section is WAITING: peek showing (less than half
+       entered), nothing in flight, nothing begun, not yet visited. Any scroll
+       that moves the page re-evaluates this, so the arrow is gone on the first
+       frame of the entrance - acting on the hint is what dismisses it. */
+    const show = !busy && !engaged && !spent && progress() < 0.02 &&
+      r.top < innerHeight - 4 && r.top > innerHeight * 0.5
+    hint.classList.toggle("on", show)
+    if (show) hint.style.top = Math.round((innerHeight - r.top) / 2) + "px"
+  }
+
   const release = () => {
     busy = false
     window.__eviiveDriving = false
@@ -236,6 +273,7 @@ export default function mount(host) {
     window.__eviiveDriving = true
     clearTimeout(guardT)
     guardT = setTimeout(release, GUARD_MS)        // never trap the reader
+    updateHint()                                  // acting dismisses the hint
     const a = api()
     if (a && a.to) a.to(i === 0 ? 0.5 : 1)
     glide(states()[i], release)
@@ -455,6 +493,7 @@ export default function mount(host) {
      programmatic scroll) heals on its own: no waiting for the next gesture. */
   let settleT = 0
   const onScroll = () => {
+    updateHint()
     if (!busy && !engaged && !spent) {
       const rt = pinEl.getBoundingClientRect().top
       const edge = innerHeight * (1 - PEEK) - 2   // anything deeper than the stop
@@ -498,6 +537,7 @@ export default function mount(host) {
       engaged = true
       a.seek(0.5)
     } else a.seek(0)
+    updateHint()
   }, 120)
 
   // debug window into the closure - read-only, costs nothing when unused
@@ -533,6 +573,7 @@ export default function mount(host) {
     removeEventListener("keydown", onKey)
     document.documentElement.classList.remove("eviive-snap")
     clearInterval(navTimer)
+    hint.remove()
     style.remove(); driverEl.remove()
     if (blobUrl) URL.revokeObjectURL(blobUrl)
     host.innerHTML = ""

@@ -177,7 +177,13 @@ guess.
   deliberate `PEEK` (0.15 of the viewport)**: a dark band of the section stands
   at the bottom edge, because a stop with nothing visible below read as the end
   of the site. The peek is the stop POSITION, not a scroll state - so it is
-  deterministic and self-healing, unlike the free-scroll peek it replaces. The next flick
+  deterministic and self-healing, unlike the free-scroll peek it replaces.
+  **A scroll hint bobs in the band** - the site's own arrow (Phosphor ArrowDown
+  regular, the exact glyph the Framer icon component lazy-loads from
+  phosphor-icons/ArrowDown@0.0.57), centred horizontally and centred in the
+  visible band, colour "Text - Light Tone", 2.6s bob, reduced-motion aware.
+  Visible only while the section is WAITING (peek showing, nothing in flight,
+  p ~ 0, not yet visited); any action dismisses it on the first frame. The next flick
   performs a PRE-SET entrance: the section rises into the viewport over
   `ENTER_MS` 1800ms on a pronounced ease-out, cubic-bezier(0.25, 0.10, 0.10, 1)
   - Ocean's brief verbatim: "very very smooth and grounded... very calm and
