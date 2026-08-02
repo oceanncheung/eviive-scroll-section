@@ -689,29 +689,35 @@ export default function mount(host) {{
   const COOL_MAX  = 850         // hard ceiling, whatever momentum does
   const GUARD_MS = 6000         // watchdog: never stay locked forever
 
-  /* A CRITICALLY DAMPED SPRING, not a bezier.
-     Every fixed curve tried here read as stiff, and the reason is structural: a
-     bezier is a shape imposed on a duration, so the motion starts and stops on
-     the clock rather than on any physics. Ease-out is the worst of them, since
-     it reaches maximum velocity at t=0 and therefore begins with a yank.
-       x(t) = 1 - e^(-wt)(1 + wt)
-     is the closed form of a spring damped exactly enough never to overshoot. It
-     leaves from REST, builds quickly, and asymptotes into the target, so there
-     is no instant at which the motion visibly stops. Measured against the
-     alternatives at fractions of the duration:
-       ease-out cubic   .39 .58 .87 .98    max speed at t=0, a yank
-       material bezier  .07 .24 .78 .96    no yank, but a slow leave
-       spring w=8       .34 .59 .91 .98    leaves from rest AND gets going
-     w=8 is within 0.3% by the end; the last pixels are forced exactly. */
-  const OMEGA = 8
-  const easeOut = (t) => {{
+  /* A CRITICALLY DAMPED SPRING THAT INHERITS THE READER'S SPEED.
+     Starting from rest is what made this read as two motions: the page scrolled,
+     stopped, then a separate animation began. Continuity is not a matter of
+     choosing a nicer curve - the arriving motion has to LEAVE at the speed the
+     page was already travelling.
+     Critically damped, general initial velocity:
+         x(t) = 1 - e^(-wt) * (1 + (w - v0) t)
+     v0 = 0 collapses to the from-rest form; v0 = w leaves at exactly the speed
+     the spring would have reached anyway, so the hand-off is invisible. Clamped
+     to w, beyond which it would overshoot. */
+  const spring = (t, v0) => {{
     const w = OMEGA * t
-    return 1 - Math.exp(-w) * (1 + w)
+    return 1 - Math.exp(-w) * (1 + (OMEGA - v0) * t)
   }}
 
   let idx = null                // 0 = 6.4 months, 1 = EVIIVE, null = not engaged
   let locked = false            // transition in flight: swallow everything
   let raf = 0, guardT = 0, touchY = 0
+  /* Recent scroll speed in px/ms, so a capture can continue the reader's motion
+     instead of restarting it. Smoothed - a single frame is noisy. */
+  let vel = 0, lastY = scrollY, lastT = performance.now()
+  const sampleVel = () => {{
+    const now = performance.now()
+    const dt = now - lastT
+    if (dt <= 0) return
+    vel = vel * 0.6 + ((scrollY - lastY) / dt) * 0.4
+    lastY = scrollY
+    lastT = now
+  }}
 
   const states = () => {{
     const top = pinEl.getBoundingClientRect().top + scrollY
@@ -740,7 +746,14 @@ export default function mount(host) {{
   const zone = () => {{
     const r = pinEl.getBoundingClientRect()
     if (r.top <= 0 && r.bottom >= innerHeight) return "inside"
-    if (r.top > 0 && r.top < innerHeight * (1 - CATCH_WHEN_IN)) return "approach"
+    /* Predictive, not positional. Waiting for the section to actually reach
+       CATCH_WHEN_IN meant the reader had already come to a stop before anything
+       took over — the stop is what read as two separate movements. If the speed
+       they are already travelling at would carry it past that mark shortly, the
+       gesture is ours now and the glide continues what their hand started. */
+    const inNow = (innerHeight - r.top) / innerHeight
+    const inSoon = inNow + (vel * 180) / innerHeight
+    if (r.top > 0 && Math.max(inNow, inSoon) >= CATCH_WHEN_IN) return "approach"
     if (r.bottom < innerHeight && r.bottom > innerHeight * CATCH_WHEN_IN) return "leaving"
     return "away"
   }}
@@ -753,6 +766,11 @@ export default function mount(host) {{
 
   const glideTo = (y) => {{
     const from = scrollY
+    const dist = y - from
+    // the reader's current speed, expressed in the spring's own units
+    const v0 = dist !== 0
+      ? Math.max(0, Math.min((vel * STEP_MS) / dist, OMEGA))
+      : 0
     const t0 = performance.now()
     locked = true
     window.__eviiveDriving = true      // the quantiser must not fight us
@@ -762,7 +780,7 @@ export default function mount(host) {{
     const step = (now) => {{
       const k = Math.min((now - t0) / STEP_MS, 1)
       if (k < 1) {{
-        scrollTo(0, from + (y - from) * easeOut(k))
+        scrollTo(0, from + dist * spring(k, v0))
         raf = requestAnimationFrame(step)
         return
       }}
@@ -846,6 +864,7 @@ export default function mount(host) {{
     if (d && onStep(d)) e.preventDefault()
   }}
 
+  addEventListener("scroll", sampleVel, {{ passive: true }})
   addEventListener("wheel", onWheel, {{ passive: false }})
   addEventListener("touchstart", onTouchStart, {{ passive: true }})
   addEventListener("touchmove", onTouchMove, {{ passive: false }})
@@ -863,6 +882,7 @@ export default function mount(host) {{
     removeEventListener("resize", syncVP)
     if (raf) cancelAnimationFrame(raf)
     clearTimeout(guardT)
+    removeEventListener("scroll", sampleVel)
     removeEventListener("wheel", onWheel)
     removeEventListener("touchstart", onTouchStart)
     removeEventListener("touchmove", onTouchMove)
