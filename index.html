@@ -1206,7 +1206,11 @@ nearly 4 years longer</span>
      x(t) = 1 - e^(-wt)(1 + wt) leaves from rest, so there is still no yank, but
      it is 23% along at 15% and 80% by the halfway point - the change is legible
      immediately and the tail carries the weight. */
-  const EASE=(t)=>{const w=6*t;return 1-Math.exp(-w)*(1+w)};
+  /* Clamped at the end. A spring is ASYMPTOTIC - at t=1 this is only 0.983 of
+     the way there - so progress never actually reached its target, and anything
+     waiting on "has it arrived" waited forever. The section's exit gate does
+     exactly that, so without this the reader is locked in permanently. */
+  const EASE=(t)=>{if(t>=1)return 1;const w=6*t;return 1-Math.exp(-w)*(1+w)};
   /* 2600 was tuned when the reader could still scroll during it. Now the
      controller LOCKS input until this lands, so its length is dead time on the
      page - 600ms of scroll followed by two seconds of nothing, which reads as
