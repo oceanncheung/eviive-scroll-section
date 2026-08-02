@@ -311,9 +311,21 @@ export default function mount(host) {
     }
   }
 
-  /* The scrollY of the stop: the section's top exactly at the fold's bottom,
-     one viewport of "Our Platform" on screen. */
-  const stopY = () => Math.round(pinEl.getBoundingClientRect().top + scrollY) - innerHeight
+  /* THE PEEK. A stop that parks the section entirely below the fold reads as
+     the END OF THE SITE - a viewport of Our Platform, then nothing, is exactly
+     what a footer looks like. So the stop itself includes a deliberate sliver
+     of the section: a dark band standing at the bottom edge, the oldest "there
+     is more" affordance on the web. Because the peek is the STOP POSITION and
+     not a scroll state, it is deterministic, self-healing, and identical on
+     every visit - none of the fragility of the old free-scroll peek. The
+     backdrop's slow drift keeps the band alive; the scene holds at p = 0, so
+     nothing in it has begun. */
+  const PEEK = 0.15
+
+  /* The scrollY of the stop: the section's top at (1 - PEEK) of the viewport,
+     leaving the peek band showing under a screenful of "Our Platform". */
+  const stopY = () =>
+    Math.round(pinEl.getBoundingClientRect().top + scrollY - innerHeight * (1 - PEEK))
 
   const onWheel = (e) => {
     const now = performance.now()
@@ -445,12 +457,13 @@ export default function mount(host) {
   const onScroll = () => {
     if (!busy && !engaged && !spent) {
       const rt = pinEl.getBoundingClientRect().top
-      if (rt < innerHeight - 2 && rt > innerHeight * 0.5) {
+      const edge = innerHeight * (1 - PEEK) - 2   // anything deeper than the stop
+      if (rt < edge && rt > innerHeight * 0.5) {
         clearTimeout(settleT)
         settleT = setTimeout(() => {
           if (busy || engaged || spent) return
           const rr = pinEl.getBoundingClientRect().top
-          if (rr < innerHeight - 2 && rr > innerHeight * 0.5) glide(stopY(), () => {})
+          if (rr < edge && rr > innerHeight * 0.5) glide(stopY(), () => {})
         }, 150)
       }
     }

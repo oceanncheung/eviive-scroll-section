@@ -172,8 +172,12 @@ guess.
   freezes the page, and a fresh flick retargets the tween mid-flight
   (`from = scroll.p`). The only wait is the at(1) exit gate leaving EVIIVE
 - **No CSS scroll-snap at all.** The module runs THE STOP MODEL (Ocean's
-  design): natural scrolling ENDS one viewport above the section, the way a
-  page ends - everyone lands on "Our Platform" first, at rest. The next flick
+  design): natural scrolling ENDS just above the section, the way a page ends -
+  everyone lands on "Our Platform" first, at rest. **The stop includes a
+  deliberate `PEEK` (0.15 of the viewport)**: a dark band of the section stands
+  at the bottom edge, because a stop with nothing visible below read as the end
+  of the site. The peek is the stop POSITION, not a scroll state - so it is
+  deterministic and self-healing, unlike the free-scroll peek it replaces. The next flick
   performs a PRE-SET entrance: the section rises into the viewport over
   `ENTER_MS` 1800ms on a pronounced ease-out, cubic-bezier(0.25, 0.10, 0.10, 1)
   - Ocean's brief verbatim: "very very smooth and grounded... very calm and
