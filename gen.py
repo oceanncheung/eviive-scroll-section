@@ -210,13 +210,11 @@ def emit(prelude, body):
     """Render one rule, lifting any scroll-snap declaration onto the page root."""
     head = " ".join(prelude.split())
     if head == "html":
-        snap, rest = split_snap_decls(body)
-        chunks = []
-        if snap:
-            chunks.append(f"html.{SNAP_CLASS}{{{snap}}}")
-        if rest:
-            chunks.append(f".{ROOT_CLASS}{{{rest}}}")
-        return "".join(chunks)
+        # scroll-snap-type is DROPPED, not relocated: CSS snapping offers no
+        # control over duration or easing, so the module animates to the rest
+        # states itself.
+        _snap, rest = split_snap_decls(body)
+        return f".{ROOT_CLASS}{{{rest}}}" if rest else ""
     return f"{scope_selectors(prelude)}{{{body}}}"
 
 
@@ -461,6 +459,7 @@ export default function EviiveScrollSection() {{
         document.head.appendChild(style)
 
         host.innerHTML = MARKUP
+  const pinEl = host.querySelector("#pin")
 
         // The driver is the prototype's original classic script. It reads the
         // markup by id and publishes progress on window.__eviiveScroll, which
@@ -546,8 +545,7 @@ export default function EviiveScrollSection() {{
                 el.style.scrollSnapAlign = priorAlign[n] || ""
             }})
             io.disconnect()
-            document.documentElement.classList.remove("{snap_class}")
-            style.remove()
+                    style.remove()
             driverEl.remove()
             if (blobUrl) URL.revokeObjectURL(blobUrl)
             host.innerHTML = ""
@@ -644,6 +642,7 @@ export default function mount(host) {{
   style.textContent = CSS
   document.head.appendChild(style)
   host.innerHTML = MARKUP
+  const pinEl = host.querySelector("#pin")
 
   // the driver kills any predecessor: removing a <script> does not stop the rAF
   // loop it started, and an orphan holding detached DOM pins progress to 0
@@ -652,30 +651,78 @@ export default function mount(host) {{
   document.body.appendChild(driverEl)
 
   const section = host.parentElement
-  const neighbours = [
-    section && section.previousElementSibling,
-    section && section.nextElementSibling,
-  ].filter(Boolean)
-  const prior = neighbours.map((el) => el.style.scrollSnapAlign)
-  neighbours.forEach((el) => {{ el.style.scrollSnapAlign = "start" }})
+  /* OUR OWN SNAP.
+     CSS scroll-snap cannot be tuned - no duration, no easing - and Chrome lands
+     it as an abrupt magnet. Driving it here costs one scroll listener and buys
+     the whole feel: a quick departure that decelerates into the state instead of
+     arriving with a clack. It also removes the old trap risk, because nothing
+     declares the page snap-mandatory any more; if this code did nothing at all,
+     ordinary scrolling is what would be left.
 
-  // Snap ONLY while the section covers the viewport top to bottom. An
-  // IntersectionObserver at threshold 0 switches it on the moment the first
-  // pixel appears, so you feel the page resist while still approaching. The
-  // section is 200vh, so "covers the viewport" is exactly the range in which
-  // you are inside it - and it is off at both ends, so entering and leaving
-  // are ordinary scrolling.
-  let snapOn = false
-  const syncSnap = () => {{
-    const r = host.getBoundingClientRect()
-    const covers = r.top <= 0 && r.bottom >= innerHeight
-    if (covers === snapOn) return
-    snapOn = covers
-    document.documentElement.classList.toggle("{snap_class}", covers)
+     Three rules. Only while the section owns the viewport. Never while the
+     reader is still moving. And never past the second state until the animation
+     has actually finished - the section holds them there rather than letting the
+     next one arrive over the top of an unfinished transition. */
+  const SNAP_MS = 460
+  const IDLE_MS = 90
+  const easeOut = (t) => 1 - Math.pow(1 - t, 3)   // leaves fast, lands soft
+
+  let snapping = false
+  let snapRaf = 0
+  let idle = 0
+
+  const states = () => {{
+    const top = pinEl.getBoundingClientRect().top + scrollY
+    return [top, top + innerHeight]
   }}
-  syncSnap()
-  addEventListener("scroll", syncSnap, {{ passive: true }})
-  addEventListener("resize", syncSnap, {{ passive: true }})
+  const settled = () => (((window.__eviiveScroll || {{}}).p) || 0) >= 0.995
+
+  const cancelSnap = () => {{
+    if (snapRaf) cancelAnimationFrame(snapRaf)
+    snapRaf = 0
+    snapping = false
+  }}
+
+  const animateTo = (to) => {{
+    const from = scrollY
+    if (Math.abs(to - from) < 2) return
+    const t0 = performance.now()
+    snapping = true
+    const step = (now) => {{
+      const k = Math.min((now - t0) / SNAP_MS, 1)
+      scrollTo(0, from + (to - from) * easeOut(k))
+      if (k < 1) snapRaf = requestAnimationFrame(step)
+      else {{ snapRaf = 0; snapping = false }}
+    }}
+    snapRaf = requestAnimationFrame(step)
+  }}
+
+  const maybeSnap = () => {{
+    if (snapping || !pinEl) return
+    const r = pinEl.getBoundingClientRect()
+    if (r.top > 0 || r.bottom < innerHeight) return   // not ours yet
+    const st = states(), s1 = st[0], s2 = st[1]
+    const y = scrollY
+    if (y < s1 - innerHeight * 0.5) return            // still approaching
+    if (y > s2) {{
+      if (!settled()) return animateTo(s2)            // hold until it lands
+      if (y > s2 + innerHeight * 0.35) return         // then let them go
+    }}
+    animateTo(Math.abs(y - s1) < Math.abs(y - s2) ? s1 : s2)
+  }}
+
+  const onScroll = () => {{
+    if (snapping) return
+    clearTimeout(idle)
+    idle = setTimeout(maybeSnap, IDLE_MS)
+  }}
+  // deliberate input abandons a snap in progress - never fight the reader
+  const onIntent = () => {{ if (snapping) cancelSnap() }}
+
+  addEventListener("scroll", onScroll, {{ passive: true }})
+  addEventListener("wheel", onIntent, {{ passive: true }})
+  addEventListener("touchstart", onIntent, {{ passive: true }})
+  addEventListener("keydown", onIntent)
 
   let blobUrl = ""
   try {{
@@ -687,9 +734,12 @@ export default function mount(host) {{
     if (window.__eviiveStop) window.__eviiveStop()
     ro.disconnect()
     removeEventListener("resize", syncVP)
-    removeEventListener("scroll", syncSnap)
-    removeEventListener("resize", syncSnap)
-    neighbours.forEach((el, i) => {{ el.style.scrollSnapAlign = prior[i] || "" }})
+    cancelSnap()
+    clearTimeout(idle)
+    removeEventListener("scroll", onScroll)
+    removeEventListener("wheel", onIntent)
+    removeEventListener("touchstart", onIntent)
+    removeEventListener("keydown", onIntent)
     document.documentElement.classList.remove("{snap_class}")
     clearInterval(navTimer)
     style.remove(); driverEl.remove()
