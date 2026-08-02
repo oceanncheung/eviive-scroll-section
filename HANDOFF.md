@@ -258,7 +258,13 @@ guess.
   scene 1 used to silently kill the whole choreography for the page load -
   Ocean's exact repro: interrupt the entrance, scroll up, come back, section
   frozen at scene 1 forever, EVIIVE unreachable without a refresh.
-  In-section stepping lives on `engaged`, not `spent`. The outside-reset
+  **THE STORY IS ONE-DIRECTIONAL (Ocean's rule).** There is no stepping back
+  from EVIIVE to scene 1. Mid-morph, up waits exactly as down does (the one
+  wait, symmetric); at landed EVIIVE, up RELEASES upward just as down releases
+  downward, spending the visit with the section resting at 53.5. This deletes
+  the last bad terminal state (frozen at scene 1 after a full read) by making
+  it unreachable, rather than patching its resting face. The only remaining
+  in-section transition is forward: scene 1 -> EVIIVE. The outside-reset
   clears engagement only; do not "offer it again" by clearing `spent` there -
   that exact reset once let a leaving flick's own tail drag the reader back
   in. The hint is re-evaluated by the invariant tick as well as by scroll

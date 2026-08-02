@@ -331,7 +331,20 @@ export default function mount(host) {
         engaged = false; spent = true; sawFull = true
         return false                              // landed - on you go
       }
-      if (idx === 1) { engage(0); return true }
+      if (idx === 1) {
+        /* ONE DIRECTION (Ocean's rule). There is no stepping back: the story
+           plays forward once, and at its end the section simply lets go both
+           ways - up releases to the previous section exactly as down releases
+           to the next, and the finished 53.5 state is what rests on screen
+           for the remainder of the page load. This also DELETES the last bad
+           terminal state (frozen at scene 1 after a full read) rather than
+           patching its resting face: with no back-step, scene 1 after EVIIVE
+           is unreachable. Mid-morph, up waits exactly as down does - the one
+           wait, now symmetric. */
+        if (!at(1)) return true
+        engaged = false; spent = true; sawFull = true
+        return false                              // finished - off you go, upward
+      }
       engaged = false
       spent = sawFull                             // half-read: stay armed for a replay
       /* Abandoning a half-read visit REWINDS the story - tweened, not seeked,
