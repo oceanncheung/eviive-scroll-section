@@ -150,9 +150,12 @@ guess.
 ## Working now
 
 - Section on the homepage, opens on 6.4 months
-- The **approach** scrubs progress 0→0.5, finishing 75% of the way in, so the
-  odometer counts up and the orb settles as the section rises into view
-- One deliberate scroll → 53.5 months, on a 2.6s weighted tween
+- The **approach** holds progress at 0 — the section rises as a plain dark band
+  under ordinary scrolling and nothing animates. The reveal is a reward for
+  arriving, not something the reader watches happen sideways. `index.html` still
+  scrubs the approach when opened standalone; `__eviiveOwned` suppresses that in
+  the embedded build
+- One deliberate flick → 53.5 months, on a 900ms tween
 - **No CSS scroll-snap at all.** It offers no control over duration or easing, so
   the module runs a discrete controller. The sequence: the section rises under
   ordinary scrolling with the scene held at `p = 0`; one flick glides it to fill
