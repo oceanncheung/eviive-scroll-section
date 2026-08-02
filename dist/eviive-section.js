@@ -116,21 +116,50 @@ export default function mount(host) {
      it was thrown, which is the definition of unpredictable. */
   const ARM_IN = 0.25
 
-  /* Duration scales with distance - the same curve over 20vh and over 75vh are
-     not the same motion - and both ends stay inside the 100-500ms band past
-     which motion reads as a drag rather than as travel. */
-  const GLIDE_MIN = 340, GLIDE_MAX = 560
+  /* Duration scales with distance. These are deliberately LONG. The 100-500ms
+     band belongs to UI feedback - a button, a toggle, something acknowledging a
+     click. This is not that: it is the page itself travelling most of a screen,
+     and at 450ms that reads as a lurch no curve can rescue. Arriving at a
+     destination wants to be seen happening. */
+  const GLIDE_MIN = 820, GLIDE_MAX = 1150
   const GUARD_MS  = 6000
 
-  /* Ease-out, fixed. An entrance wants a fast start and a soft landing so the
-     eye can follow it to rest; ease-in on an entrance reads as unresponsive.
-     This is easeOutQuint, which leaves harder than the usual (0.4, 0, 0.2, 1)
-     and settles later - "snappy but arriving elegantly", as a number.
+  /* A real cubic-bezier, solved by Newton-Raphson exactly the way the browser
+     solves one, so the curve can be written the way it is read.
+
+     easeOutQuint was wrong here and wrong in a way that is easy to miss: it is
+     76% done in the first quarter of its duration. Over a short glide that
+     means a lurch followed by a long crawl nobody can see - which is precisely
+     what "stiff, no easing" describes. The complaint was never that the curve
+     was too soft; it was that all the travel happened at once.
+
+     (0.30, 0, 0.15, 1) picks up immediately but gently, spends the middle of
+     its time actually moving, and lands long. Roughly: 9% at a tenth of the
+     way, 28% at a fifth, 75% at half, 97% at four fifths.
+
      An earlier version seeded a spring with the gesture's own velocity. Springs
      belong to motion a finger is still tracking; for a discrete step they only
      make the identical flick feel different every time, and a spring never
      actually arrives, so anything waiting on arrival waits forever. */
-  const ease = (t) => 1 - Math.pow(1 - t, 5)
+  const bezier = (x1, y1, x2, y2) => {
+    const A = (a, b) => 1 - 3 * b + 3 * a
+    const B = (a, b) => 3 * b - 6 * a
+    const C = (a) => 3 * a
+    const at = (t, a, b) => ((A(a, b) * t + B(a, b)) * t + C(a)) * t
+    const slope = (t, a, b) => 3 * A(a, b) * t * t + 2 * B(a, b) * t + C(a)
+    return (x) => {
+      if (x <= 0) return 0
+      if (x >= 1) return 1
+      let t = x
+      for (let i = 0; i < 6; i++) {
+        const d = slope(t, x1, x2)
+        if (Math.abs(d) < 1e-6) break
+        t -= (at(t, x1, x2) - x) / d
+      }
+      return at(t, y1, y2)
+    }
+  }
+  const ease = bezier(0.30, 0.00, 0.15, 1.00)
 
   let idx = null                // 0 = 6.4 months, 1 = EVIIVE, null = not engaged
   let busy = false              // a step is in flight, page AND scene
@@ -211,7 +240,7 @@ export default function mount(host) {
     const dist = y - from
     if (Math.abs(dist) < 2) { scrollTo(0, y); then(); return }
     const ms = Math.min(GLIDE_MAX,
-                Math.max(GLIDE_MIN, GLIDE_MIN + (Math.abs(dist) / innerHeight) * 280))
+                Math.max(GLIDE_MIN, GLIDE_MIN + (Math.abs(dist) / innerHeight) * 380))
     const t0 = performance.now()
     if (raf) cancelAnimationFrame(raf)
     const step = (now) => {
