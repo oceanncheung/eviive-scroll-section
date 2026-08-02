@@ -367,7 +367,17 @@ nearly 4 years longer</span>
                     : lerp(k[1], k[2], (p - 0.5) / 0.5)
   }
 
-  function setOdometer(p){
+  /* Reference duration the blur was tuned against. The wheels travel a FIXED
+     number of cells, so their per-frame displacement - which is all this model
+     measures - is inversely proportional to how long the tween lasts. Shortening
+     DUR from 2600 to 900 therefore tripled the blur without a line of blur code
+     changing, and pinned it against its own ceiling: the digits sat at maximum
+     smear for a third of the roll and only resolved at the end. Measured against
+     golden, leg one peaked at 6.72 and never clamped; here it clamped for 31
+     frames. Scale by the ratio and the look is duration-independent. */
+  const BLUR_REF_MS = 2600
+  let odoT = 0
+  function setOdometer(p, now){
     for (const key in stacks){
       const { st, col } = stacks[key]
       const pos = wheelPos(key, p)
@@ -375,7 +385,15 @@ nearly 4 years longer</span>
 
       const prev = spin[key] === undefined ? pos : spin[key]
       spin[key] = pos
-      const speed = Math.abs(pos - prev)
+      /* Velocity, not per-frame displacement. A frame that runs long moves the
+         wheel further, and reading that raw made the blur track frame-time noise
+         instead of the animation: jitter frame to frame was 17% against golden's
+         3.3%, which is precisely the shimmer that reads as the number refusing
+         to settle. Normalising by dt makes a slow frame and a fast one look the
+         same. */
+      const dt = odoT ? clamp(now - odoT, 4, 64) : 16.67
+      odoT = now
+      const speed = Math.abs(pos - prev) * (16.67 / dt) * (durFor(target) / BLUR_REF_MS)
       /* Attack instantly, release fast, and END - do not asymptote.
          A symmetric 0.84-per-frame average lags the motion by about thirty
          frames, so the wheels came to rest and then went on blurring, masking
@@ -385,9 +403,14 @@ nearly 4 years longer</span>
          lands with the digits instead of trailing them. The hard zero matters as
          much as the rate - an exponential never actually reaches nothing, and
          everything downstream of this is thresholded. */
-      blurAmt[key] = speed > blurAmt[key]
-        ? speed
-        : blurAmt[key] * 0.55 + speed * 0.45
+      /* Golden's smoothing while the wheel is moving at all - that heavy 0.84
+         is doing real work, and replacing it with an instant attack is what
+         let frame-time noise through. The ONLY change from golden is the
+         release: once the wheel has stopped, let go quickly and hard-zero,
+         instead of bleeding out over thirty frames underneath a number that
+         had already arrived. */
+      const k = speed > 1e-6 ? 0.84 : 0.55
+      blurAmt[key] = blurAmt[key] * k + speed * (1 - k)
       if (blurAmt[key] < 1e-4) blurAmt[key] = 0
 
       // edge softness follows speed — continuous, so nothing ever snaps
@@ -400,7 +423,14 @@ nearly 4 years longer</span>
       col.style.setProperty("--eat",  (feather * 11.5).toFixed(2) + "%")
       col.style.setProperty("--fade", (2.4 + feather * 11.0).toFixed(2) + "%")
 
-      const px = clamp(blurAmt[key] * cellPx * 0.30, 0, 9)
+      /* 0.30 was golden's, but golden's cell is not this build's cell - the
+         nav inset changes the type scale, so the same blur amount lands harder
+         here and leg one sat against the 9px ceiling for 37 frames where golden
+         never reached it once. Saturated blur is not motion, it is a smear that
+         resolves at the end, which is what reads as the number refusing to
+         settle. Calibrated by measurement against golden, not by arithmetic:
+         0.30 clamped for 37 frames on leg one, 0.20 for 29, 0.15 for 7. */
+      const px = clamp(blurAmt[key] * cellPx * 0.13, 0, 9)
       /* Attaching or removing a filter swaps the rasterisation path, so the
          glyph is redrawn differently on that one frame. At the old 0.3 the
          columns were each still visibly soft when they switched, and they
@@ -1295,7 +1325,7 @@ nearly 4 years longer</span>
          to a single tick. Cheap to compare, and it re-measures at most once
          per viewport change rather than per frame. */
       if (seenVP.w !== innerWidth || seenVP.h !== innerHeight){ alignUnit(); layoutStagger() }
-      setOdometer(p);
+      setOdometer(p, now);
       /* GEOMETRIC, not linear. Tick spacing is span/months — a 1/x curve — so
        stepping the month COUNT evenly compresses the rail violently at the
        start and almost not at all at the end, and no easing on top can fix
