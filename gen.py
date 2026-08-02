@@ -725,18 +725,23 @@ export default function mount(host) {{
      middle of the screen first — until then scrolling is ordinary, and the
      hand-off reads as a decision rather than an ambush. Applied symmetrically
      so coming back up behaves the same way. */
-  /* 0.5 meant the first gesture after the section appeared was spent scrolling
-     natively and only the second one glided in - the wasted scroll. 0.85 catches
-     it once about a sixth of the section is showing, so the first gesture IS the
-     motion. It does not skip the previous section the way 1.0 did, because the
-     spring leaves from rest and reads as a continuation rather than a jump. */
-  const CATCH_AT = 0.85
+  /* How much of the viewport the section must already fill before a gesture
+     belongs to it. Named the way it is read on screen: 0.8 means "wait until the
+     section is 80% in".
+     The previous constant was the inverse - a threshold on the section's TOP
+     edge - so 0.85 meant capturing when barely 15% of it was showing, the
+     grabbiest possible setting. When the first scroll felt wasted I moved that
+     number up, which made it grab even earlier rather than later.
+     At 0.8 the reader scrolls out of Our Platform normally and the section is
+     nearly filling the screen before one gesture completes the arrival, so the
+     glide is short and reads as settling rather than being yanked. */
+  const CATCH_WHEN_IN = 0.8
 
   const zone = () => {{
     const r = pinEl.getBoundingClientRect()
     if (r.top <= 0 && r.bottom >= innerHeight) return "inside"
-    if (r.top > 0 && r.top < innerHeight * CATCH_AT) return "approach"
-    if (r.bottom < innerHeight && r.bottom > innerHeight * (1 - CATCH_AT)) return "leaving"
+    if (r.top > 0 && r.top < innerHeight * (1 - CATCH_WHEN_IN)) return "approach"
+    if (r.bottom < innerHeight && r.bottom > innerHeight * CATCH_WHEN_IN) return "leaving"
     return "away"
   }}
 
