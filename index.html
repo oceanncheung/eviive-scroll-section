@@ -1198,7 +1198,15 @@ nearly 4 years longer</span>
      the same dead tail the original had. This one holds speed across two
      thirds of the move and is still visibly travelling at 85%, which is what
      mass actually does. */
-  const EASE=bezierEasing(0.37,0,0.63,1);
+  /* A CRITICALLY DAMPED SPRING, matching the scroll controller's own motion.
+     (0.37,0,0.63,1) is an ease-in-out: barely 9% along at 15% of its duration.
+     Scrolling BACK you mostly watch the page move, which runs on the spring and
+     reads as snappy; scrolling FORWARD you watch the scene, which sat almost
+     still for the first couple hundred milliseconds. Same timing, opposite feel.
+     x(t) = 1 - e^(-wt)(1 + wt) leaves from rest, so there is still no yank, but
+     it is 23% along at 15% and 80% by the halfway point - the change is legible
+     immediately and the tail carries the weight. */
+  const EASE=(t)=>{const w=6*t;return 1-Math.exp(-w)*(1+w)};
   /* 2600 was tuned when the reader could still scroll during it. Now the
      controller LOCKS input until this lands, so its length is dead time on the
      page - 600ms of scroll followed by two seconds of nothing, which reads as
