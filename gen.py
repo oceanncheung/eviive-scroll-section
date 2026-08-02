@@ -601,7 +601,11 @@ export default function mount(host) {{
   // wide, pinned to the top, a plausible bar height.
   const measureNav = () => {{
     let h = 0
-    const list = document.querySelectorAll("body > *, body > * > *, body > * > * > *")
+    // Framer nests its header well below body; a depth-limited selector never
+    // found it and --nav-h stayed 0, so the title sat under the bar. This only
+    // ever runs off-canvas, where the DOM is the real page rather than the
+    // editor, and the poll stops as soon as a nav is found.
+    const list = document.body.querySelectorAll("*")
     for (let i = 0; i < list.length; i++) {{
       const el = list[i]
       if (el === host || el.contains(host) || host.contains(el)) continue
@@ -617,12 +621,17 @@ export default function mount(host) {{
     // rail via --nav-h without a resize left every tick positioned against stale
     // coordinates - which is why the timeline disappeared.
     const px = Math.round(h) + "px"
-    if (px === host.style.getPropertyValue("--nav-h")) return
-    host.style.setProperty("--nav-h", px)
-    dispatchEvent(new Event("resize"))
+    if (px !== host.style.getPropertyValue("--nav-h")) {{
+      host.style.setProperty("--nav-h", px)
+      dispatchEvent(new Event("resize"))
+    }}
+    return h > 0
   }}
-  measureNav()
-  const navTimer = setInterval(measureNav, 250)   // the nav can mount later
+  let navFound = measureNav()
+  const navTimer = setInterval(() => {{
+    if (navFound) return clearInterval(navTimer)
+    navFound = measureNav()
+  }}, 250)                                        // the nav can mount later
   setTimeout(() => clearInterval(navTimer), 6000)
 
   const style = document.createElement("style")

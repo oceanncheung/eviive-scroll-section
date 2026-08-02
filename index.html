@@ -731,17 +731,18 @@ nearly 4 years longer</span>
   }
 
   function setRail(months){
-    /* RE-MEASURE, every frame. railGeom is captured in alignUnit in VIEWPORT
-       coordinates, and alignUnit runs on load — when this section is still far
-       down the page. Once the sticky pins, the rail's real viewport top is
-       navH + 96, but the cached value was still its unpinned position several
-       hundred pixels lower. headY came out negative, the span clamped to 1px,
-       and all eighty ticks collapsed into a 40px smear. In the prototype the
-       pin started at the document top so the cached value happened to be right
-       from the first frame; here it never is. One rect read, before any writes. */
-    const rg = railEl.getBoundingClientRect()
-    railGeom.top = rg.top;   railGeom.h = rg.height
-    railGeom.left = rg.left; railGeom.w = rg.width
+    /* MEASURE WITHIN THE STAGE, not the viewport. alignUnit used to cache this
+       from getBoundingClientRect, and it runs on load — when the section is
+       still far down the page — so once the sticky pinned, the cached top was
+       hundreds of pixels stale, headY went negative and all eighty ticks
+       collapsed into a smear. But re-reading the RECT each frame is just as
+       wrong the other way: while the section is still rising its viewport top
+       changes continuously, so headY moves and the whole timeline visibly
+       slides on the way in and out. offsetTop is relative to the sticky box,
+       which is constant whatever the page is doing. Correct while scrolling in,
+       pinned, and scrolling out. */
+    railGeom.top = railEl.offsetTop;   railGeom.h = railEl.offsetHeight
+    railGeom.left = railEl.offsetLeft; railGeom.w = railEl.offsetWidth
 
     // length along the rail's own axis, and where the head sits on it
     const H = HZ() ? railGeom.w : railGeom.h
