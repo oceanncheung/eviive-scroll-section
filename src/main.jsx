@@ -373,9 +373,16 @@ function Orb() {
        leaves between the headline and the rail's furniture, measured in
        alignUnit. Fixed fractions were chosen independently of where the rail
        lands, so nothing ever guaranteed they clear it. */
-    const ORB_Y = narrow ? (scroll.orbY || 0.355) : 0.5
+    /* Desktop used to hard-code dead centre. With a fixed nav overhead the
+       usable stage is the viewport MINUS the nav, and the orb has to sit in the
+       middle of that, not of the screen. It matters beyond looks: the rail is
+       flush at both ends only when headY / H is exactly 0.5, and that fraction
+       holds only if the rail's midpoint and the orb's centre are the same line.
+       Leaving the orb at vh/2 while the rail started below the nav is what
+       stopped the timeline reaching top and bottom. */
+    const ORB_Y = scroll.orbY || (narrow ? 0.355 : 0.5)
     const lift  = (0.5 - ORB_Y) * 2 * HALF_TAN
-    mesh.current.position.y = narrow ? lift * dist : 0
+    mesh.current.position.y = lift * dist
     /* Horizontal placement, same principle: the body sits in the middle of the
        room it has, not the middle of the screen. Half-width at a given depth
        is dist * tan(halfFov) * aspect. */

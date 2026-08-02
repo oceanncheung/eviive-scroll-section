@@ -49,7 +49,7 @@ body{margin:0;background:var(--dark);font-family:"Inter",system-ui,sans-serif;
 
 .headline{position:absolute;left:var(--gutter);top:var(--pad-t);margin:0;
   font-size:var(--f-h2);line-height:1.18;letter-spacing:-.03em;font-weight:400;
-  color:var(--ink);max-width:17ch}
+  color:var(--ink);max-width:24ch}
 /* Nothing is pre-printed in grey. Every line arrives the way Framer reveals
    text: word by word, rising a little and resolving out of blur. */
 .headline .ln{display:block;white-space:pre-wrap}
@@ -144,7 +144,7 @@ body{margin:0;background:var(--dark);font-family:"Inter",system-ui,sans-serif;
   white-space:nowrap;font-style:normal;font-size:var(--f-h4);line-height:1.4;
   letter-spacing:-.02em;color:var(--ink);will-change:transform,filter,opacity}
 
-.caption{position:absolute;right:calc(var(--gutter) + 52px);bottom:var(--pad-b);margin:0;max-width:74ch;text-align:right;
+.caption{position:absolute;right:calc(var(--gutter) + 52px);bottom:var(--pad-b);margin:0;max-width:74ch;text-align:right;text-wrap:balance;
   font-size:11px;line-height:1.55;color:var(--soft);opacity:0;will-change:opacity}
 
 .cue{position:absolute;left:50%;bottom:var(--s48);width:1px;height:44px;
@@ -544,7 +544,16 @@ aligned patients</span>
     caption.style.textAlign = caption.style.maxWidth = ""
     readoutEl.style.top = readoutEl.style.bottom = ""
     railEl.style.top = railEl.style.bottom = ""
-    scroll.orbY = 0.5; scroll.orbX = 0.5; scroll.orbDia = 0   // overridden below
+    /* The stage is the viewport below the nav, so its centre is navH/2 lower
+       than the screen's. Publishing it here keeps the orb, the rail's midpoint
+       and the mark on one line — which is the condition for the rail being
+       flush at both ends. */
+    const navH = parseFloat(
+      getComputedStyle(document.querySelector(".eviive-root") || document.documentElement)
+        .getPropertyValue("--nav-h")
+    ) || 0
+    scroll.orbY = 0.5 + navH / (2 * innerHeight)
+    scroll.orbX = 0.5; scroll.orbDia = 0                       // overridden below
     // the LAST column is the tenths — it is never the one that collapses
     const cols = odo.querySelectorAll(".odo-col")
     const col = cols[cols.length - 1], cell = col && col.querySelector("i")
