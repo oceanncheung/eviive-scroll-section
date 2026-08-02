@@ -609,7 +609,12 @@ export default function mount(host) {{
     // found it and --nav-h stayed 0, so the title sat under the bar. This only
     // ever runs off-canvas, where the DOM is the real page rather than the
     // editor, and the poll stops as soon as a nav is found.
-    const list = document.body.querySelectorAll("*")
+    // Hit-test the top of the screen rather than walking the document. The old
+    // scan called getComputedStyle on every node of a Framer page - thousands of
+    // forced style recalcs, repeated on a timer - which is the hitch felt while
+    // approaching the section. elementsFromPoint returns only the stack under a
+    // single pixel, so a fixed header is in it by construction.
+    const list = document.elementsFromPoint(Math.round(innerWidth / 2), 4)
     for (let i = 0; i < list.length; i++) {{
       const el = list[i]
       if (el === host || el.contains(host) || host.contains(el)) continue
@@ -666,31 +671,29 @@ export default function mount(host) {{
      A wheel gesture is dozens of events. Handling each one would fire every
      step at once, so after acting we swallow the rest of the burst until the
      reader has been still for COOL_MS. */
-  const STEP_MS  = 560          // scroll travel between states
+  const STEP_MS  = 620          // spring is home well before this
   const COOL_MS  = 160          // quiet time that ends one gesture
   const GUARD_MS = 6000         // watchdog: never stay locked forever
 
-  /* Ease-out cubic reaches its MAXIMUM velocity at t=0, so every move began
-     with a yank and then merely decayed — read as stiff however short it was.
-     A bezier with a real acceleration phase picks up quickly without the jerk
-     and settles over a long tail, which is what "snappy but not brittle" wants.
-     Measured across candidates at fractions of the duration:
-       (0.32,0.72,0,1)  .46 .78 .96 .99   <- 46% gone in the first 15%: a yank
-       easeOutCubic     .39 .58 .87 .98   <- same fault, milder
-       (0.4,0,0.2,1)    .07 .24 .78 .96   <- a real S: pickup, travel, settle
-     The third is the one that reads as quick rather than abrupt. */
-  const bez = (x1, y1, x2, y2) => {{
-    const cx = (t) => {{ const u = 1 - t; return 3*u*u*t*x1 + 3*u*t*t*x2 + t*t*t }}
-    const cy = (t) => {{ const u = 1 - t; return 3*u*u*t*y1 + 3*u*t*t*y2 + t*t*t }}
-    return (x) => {{
-      if (x <= 0) return 0
-      if (x >= 1) return 1
-      let lo = 0, hi = 1, m = 0
-      for (let i = 0; i < 20; i++) {{ m = (lo + hi) / 2; cx(m) < x ? lo = m : hi = m }}
-      return cy((lo + hi) / 2)
-    }}
+  /* A CRITICALLY DAMPED SPRING, not a bezier.
+     Every fixed curve tried here read as stiff, and the reason is structural: a
+     bezier is a shape imposed on a duration, so the motion starts and stops on
+     the clock rather than on any physics. Ease-out is the worst of them, since
+     it reaches maximum velocity at t=0 and therefore begins with a yank.
+       x(t) = 1 - e^(-wt)(1 + wt)
+     is the closed form of a spring damped exactly enough never to overshoot. It
+     leaves from REST, builds quickly, and asymptotes into the target, so there
+     is no instant at which the motion visibly stops. Measured against the
+     alternatives at fractions of the duration:
+       ease-out cubic   .39 .58 .87 .98    max speed at t=0, a yank
+       material bezier  .07 .24 .78 .96    no yank, but a slow leave
+       spring w=8       .34 .59 .91 .98    leaves from rest AND gets going
+     w=8 is within 0.3% by the end; the last pixels are forced exactly. */
+  const OMEGA = 8
+  const easeOut = (t) => {{
+    const w = OMEGA * t
+    return 1 - Math.exp(-w) * (1 + w)
   }}
-  const easeOut = bez(0.4, 0, 0.2, 1)
 
   let idx = null                // 0 = 6.4 months, 1 = EVIIVE, null = not engaged
   let locked = false            // transition in flight: swallow everything
@@ -721,7 +724,7 @@ export default function mount(host) {{
 
   const unlock = () => {{ locked = false; clearTimeout(guardT) }}
 
-  const glideTo = (y, targetP) => {{
+  const glideTo = (y, targetP, hold) => {{
     const from = scrollY
     const t0 = performance.now()
     locked = true
@@ -730,10 +733,19 @@ export default function mount(host) {{
     if (raf) cancelAnimationFrame(raf)
     const step = (now) => {{
       const k = Math.min((now - t0) / STEP_MS, 1)
-      scrollTo(0, from + (y - from) * easeOut(k))
-      if (k < 1) {{ raf = requestAnimationFrame(step); return }}
+      if (k < 1) {{
+        scrollTo(0, from + (y - from) * easeOut(k))
+        raf = requestAnimationFrame(step)
+        return
+      }}
+      scrollTo(0, y)                 // asymptotic curve: land it exactly
       raf = 0
-      // hold the lock until the scene itself has finished arriving
+      /* Only the EVIIVE transition is uninterruptible. Waiting on the scene for
+         BOTH steps meant arriving at 6.4 swallowed every input for as long as
+         the driver's 2.6s tween took to land - which is why scrolling back up
+         felt impossible. Reaching the first state releases as soon as the
+         scroll itself is done. */
+      if (!hold) return unlock()
       const settle = () => {{
         if (Math.abs(progress() - targetP) < 0.005) return unlock()
         raf = requestAnimationFrame(settle)
@@ -745,7 +757,7 @@ export default function mount(host) {{
 
   const goto = (i) => {{
     idx = i
-    glideTo(states()[i], i === 0 ? 0.5 : 1)
+    glideTo(states()[i], i === 0 ? 0.5 : 1, i === 1)
   }}
 
   const cool = () => {{
