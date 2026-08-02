@@ -216,6 +216,15 @@ guess.
   crossed the section's bottom the offered-again reset cleared `spent` and the
   same flick's remaining events dragged them backwards into an entrance.
 
+  **The choreography plays ONCE per page load** (Ocean's rule). `spent` is
+  permanent: after the reader is released from either end, every capture path
+  closes - the stop, the hint, the entrance, re-entry from below - and the
+  section scrolls by like any other, resting in whatever scene it finished.
+  In-section stepping (EVIIVE -> scene 1 on scroll-up BEFORE leaving) survives,
+  because it lives on `engaged`, not `spent`. The outside-reset clears
+  engagement only; do not "offer it again" by clearing `spent` there - that
+  exact reset once let a leaving flick's own tail drag the reader back in.
+
   **The overshoot catch survives as a safety net** (not spent + home crossed +
   heading down = catch): the boundary makes it nearly unreachable, but if it is
   ever bypassed - programmatic scrolls, anchors - the reader still cannot end

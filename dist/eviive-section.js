@@ -318,6 +318,9 @@ export default function mount(host) {
 
     const z = zone()
     if (z === "away") { idx = null; return false }
+    /* After a completed visit every capture path is closed - the section
+       scrolls by like any other, in both directions, holding its final scene. */
+    if (spent) return false
     if (z === "approach") {
       if (dir < 0) return false                   // heading away, let them go
       engage(0)                                   // safety: boundary was bypassed
@@ -328,7 +331,6 @@ export default function mount(host) {
       engage(1)                                   // re-entering from below
       return true
     }
-    if (spent) return false                       // just let them out; do not re-grab
     engage(progress() >= 0.75 ? 1 : 0)            // arrived by ordinary scrolling
     return true
   }
@@ -513,10 +515,16 @@ export default function mount(host) {
     if (!below && !above) return
     idx = null
     engaged = false
-    spent = false                             // it may be offered again
+    /* `spent` is PERMANENT for the page load (Ocean: "this animation only need
+       to play once"). The choreography - stop, hint, entrance, reveal - is a
+       first-impression device; once the reader has been released from either
+       end, the section becomes an ordinary section resting in whatever scene
+       it finished, and passing it again in either direction is plain
+       scrolling. Only in-section stepping survives, and that lives on
+       `engaged`, not here. */
     const a = api()
-    // rewind only when it is ahead of them, so returning to it plays properly
-    if (below && a && a.seek && progress() !== 0) a.seek(0)
+    // rewind only when the story has NOT been told yet
+    if (below && !spent && a && a.seek && progress() !== 0) a.seek(0)
   }
 
   /* The controller is the only writer of progress. The driver also infers it
