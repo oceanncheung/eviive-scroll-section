@@ -53,6 +53,11 @@ body{margin:0;background:var(--dark);font-family:"Inter",system-ui,sans-serif;
 /* Nothing is pre-printed in grey. Every line arrives the way Framer reveals
    text: word by word, rising a little and resolving out of blur. */
 .headline .ln{display:block;white-space:pre-wrap}
+/* l1b and line2 flow as ONE paragraph so "stay" can sit beside "patients"
+   instead of leaving it stranded. Doing it this way rather than widening the
+   headline matters: the block keeps the golden's 17ch, so the orb keeps its
+   horizontal room and stays centred. The accent simply begins mid-line. */
+.headline #l1b, .headline #line2{display:inline}
 /* Scene 2's title must leave while scene 3's reveals in the SAME place. Out
    of flow, so the moment it display:nones nothing under it can reflow — in
    flow, the incoming title revealed 120px too low and then snapped up the
@@ -646,7 +651,7 @@ aligned patients</span>
          jump between scenes. Show the scene 3 lines, measure, put it back. */
       const hEl = document.querySelector(".headline")
       const wasD = [l1a, l1b, line2].map(e => e.style.display)
-      l1a.style.display = "none"; l1b.style.display = "block"; line2.style.display = "block"
+      l1a.style.display = "none"; l1b.style.display = ""; line2.style.display = ""
       const titleBottom = hEl.getBoundingClientRect().bottom
       ;[l1a, l1b, line2].forEach((e, i) => { e.style.display = wasD[i] })
 
@@ -996,7 +1001,7 @@ aligned patients</span>
   function layoutStagger(){
     for (const g of revGroups){
       const was = g.els.map(e => e.style.display);
-      g.els.forEach(e => { e.style.display = "block" });
+      g.els.forEach(e => { e.style.display = "" });   // stylesheet decides
       let lastTop = null, line = -1, k = 0;
       for (const b of g.words){
         const top = Math.round(b.getBoundingClientRect().top);
@@ -1080,7 +1085,9 @@ aligned patients</span>
       const leaving = g.x > 0.0001;
       const shown = leaving ? g.x < 0.999 : g.t > 0.0005;
       for (const e of g.els){
-        const d = shown ? "block" : "none";
+        /* "" not "block": an inline style would beat the stylesheet, and
+           #l1b / #line2 are inline so they can share a line. */
+        const d = shown ? "" : "none";
         if (e._d !== d){ e.style.display = d; e._d = d }
       }
       if (!shown) continue;
