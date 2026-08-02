@@ -98,13 +98,18 @@ export default function mount(host) {
 
      A wheel gesture is dozens of events. Handling each one would fire every
      step at once, so after acting we swallow the rest of the burst until the
-     reader has been still for COOL_MS. */
+     reader has been still, bounded by COOL_MAX. */
   const STEP_MS  = 620          // spring is home well before this
-  /* Trackpad momentum keeps firing wheel events long after the fingers lift,
-     and 160ms of quiet was short enough that one flick was read as two - which
-     is the overshoot straight past EVIIVE. The timer restarts on every swallowed
-     event, so this is 400ms after the LAST event of a burst, not 400ms total. */
-  const COOL_MS  = 400
+  /* One flick must count as ONE gesture, without the cure being worse than the
+     disease. Restarting a 400ms timer on every swallowed event meant a trackpad
+     burst - which keeps firing for a second or more - held input for the whole
+     tail plus another 400ms. That is the "even more stuck" feeling.
+     The window is now a DEADLINE with a ceiling: it always lasts at least
+     COOL_MIN so a burst cannot fire twice, extends only briefly past the last
+     event, and can never run longer than COOL_MAX from the gesture itself. */
+  const COOL_TAIL = 140         // grace after the last event of a burst
+  const COOL_MIN  = 420         // a burst can never fire two steps
+  const COOL_MAX  = 850         // hard ceiling, whatever momentum does
   const GUARD_MS = 6000         // watchdog: never stay locked forever
 
   /* A CRITICALLY DAMPED SPRING, not a bezier.
@@ -129,8 +134,7 @@ export default function mount(host) {
 
   let idx = null                // 0 = 6.4 months, 1 = EVIIVE, null = not engaged
   let locked = false            // transition in flight: swallow everything
-  let cooling = false
-  let raf = 0, coolT = 0, guardT = 0, touchY = 0
+  let raf = 0, guardT = 0, touchY = 0
 
   const states = () => {
     const top = pinEl.getBoundingClientRect().top + scrollY
@@ -199,10 +203,16 @@ export default function mount(host) {
     glideTo(states()[i])
   }
 
-  const cool = () => {
-    cooling = true
-    clearTimeout(coolT)
-    coolT = setTimeout(() => { cooling = false }, COOL_MS)
+  let coolUntil = 0
+  let coolFrom = 0
+  const cooling = () => performance.now() < coolUntil
+  const cool = (fresh) => {
+    const now = performance.now()
+    if (fresh || !cooling()) coolFrom = now
+    coolUntil = Math.min(
+      Math.max(now + COOL_TAIL, coolFrom + COOL_MIN),
+      coolFrom + COOL_MAX
+    )
   }
 
   /** @returns true if the gesture was consumed */
@@ -210,31 +220,31 @@ export default function mount(host) {
     const z = zone()
     if (z === "away") { idx = null; return false }
 
-    if (locked) { cool(); return true }          // nothing gets through
-    if (cooling) { cool(); return true }         // still the same gesture
+    if (locked) { cool(false); return true }     // nothing gets through
+    if (cooling()) { cool(false); return true }   // still the same gesture
 
     if (z === "approach") {
-      if (dir > 0) { cool(); goto(0); return true }
+      if (dir > 0) { cool(true); goto(0); return true }
       return false                                  // going up, let them leave
     }
     if (z === "leaving") {
-      if (dir < 0) { cool(); goto(1); return true }   // re-enter from below
+      if (dir < 0) { cool(true); goto(1); return true }   // re-enter from below
       return false
     }
     // inside
     if (idx === null) idx = progress() >= 0.75 ? 1 : 0
     if (dir > 0) {
-      if (idx === 0) { cool(); goto(1); return true }
+      if (idx === 0) { cool(true); goto(1); return true }
       /* THE ONLY WAIT. Once at EVIIVE the reader cannot go on to the next
          section until the transition has landed — that is the whole of the
          rule. Everything else stays free: the trip in is a normal glide, and
          scrolling back up works at any moment, including mid-animation. An
          earlier version swallowed every input from the instant the gesture
          fired, which is why both steps felt dead. */
-      if (!settled()) { cool(); return true }
+      if (!settled()) { cool(false); return true }
       return false                                  // landed — scroll on
     }
-    if (idx === 1) { cool(); goto(0); return true }
+    if (idx === 1) { cool(true); goto(0); return true }
     return false                                    // at the first state, go up
   }
 
@@ -270,7 +280,6 @@ export default function mount(host) {
     ro.disconnect()
     removeEventListener("resize", syncVP)
     if (raf) cancelAnimationFrame(raf)
-    clearTimeout(coolT)
     clearTimeout(guardT)
     removeEventListener("wheel", onWheel)
     removeEventListener("touchstart", onTouchStart)
