@@ -155,7 +155,18 @@ guess.
   arriving, not something the reader watches happen sideways. `index.html` still
   scrubs the approach when opened standalone; `__eviiveOwned` suppresses that in
   the embedded build
-- One deliberate flick → 53.5 months, on a 900ms tween
+- One deliberate flick → 53.5 months, on **golden's own tween**:
+  `bezierEasing(0.37, 0, 0.63, 1)` over `DUR` 2600ms. **Do not shorten it and do
+  not re-curve it.** Golden documents why next to the constant: the move should
+  feel like shifting something heavy, the curve was chosen off its measured
+  speed profile, and its ease-in head reads as momentum at this length. Two
+  agents replaced it (an exponential spring, then 900/1300ms) and every
+  stiff/stuck/stutter complaint traced back to those. The odometer blur
+  (0.84/0.16, 0.30, threshold 0.3) is tuned to this duration - golden's model at
+  golden's length needs no compensation. `busy` covers only the page glide; the
+  2.6s tween runs unlocked because `ours` swallows the gesture tail, `engaged`
+  freezes the page, and a fresh flick retargets the tween mid-flight
+  (`from = scroll.p`). The only wait is the at(1) exit gate leaving EVIIVE
 - **No CSS scroll-snap at all.** It offers no control over duration or easing, so
   the module runs a discrete controller. The sequence: the section rises under
   ordinary scrolling with the scene held at `p = 0`; one flick glides it to fill
@@ -174,13 +185,12 @@ guess.
   happens. Both failures were observed.
 
   **The odometer blur is duration-dependent.** It measures per-frame wheel
-  displacement, so it scales inversely with the scene tween's length: golden was
-  tuned at 2600ms, and simply shortening the tween tripled the blur and pinned
-  it against its 9px ceiling — a smear that only resolves at the end, which is
-  what reads as the number stuttering before it settles. Speed is now normalised
-  by `dt` and by `durFor(target)/2600`, and the constant was calibrated by
-  measuring against golden (leg 1 must peak under 9 and clamp zero frames).
-  **Re-measure against `golden/` after any change to duration or type scale.**
+  displacement, so it scales inversely with the scene tween's length. Shortening
+  DUR from 2600 to 900 tripled the blur and pinned it at its 9px ceiling — a
+  smear that resolves only at the end, i.e. "the number stutters before it
+  stays". At golden's 2600 the golden model is correct as written; the
+  compensation added while DUR was short has been deleted with the short DUR.
+  **If DUR ever changes, re-measure the blur against `golden/` first.**
 
   **A consumed gesture owns its tail** (`ours`). A flick's momentum outlasts the
   transition, and those leftovers used to reach the browser the instant `busy`
