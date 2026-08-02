@@ -125,7 +125,17 @@ confirming them.** Three traps, all real, all hit repeatedly:
      | grep -o 'https://framerusercontent.com/modules/[^"]*' | head -1 | xargs curl -sL
    ```
 
-3. **`gen.py` contains string patches against MINIFIED output.** When the source
+3. **A throw in the wheel handler looks like nothing at all.** If `onWheel`
+   raises before `preventDefault()`, the event simply passes through and the
+   section reads as unresponsive — no red console text unless you go looking.
+   Two undefined identifiers hid there for hours this way. The handler now
+   try/catches and reports once, but **when a gesture "does nothing", check the
+   console before changing any logic.** The same trap applies to anything that
+   waits on the scene's progress: its spring is asymptotic, so `p` only reaches
+   its target because `EASE` is explicitly clamped at `t >= 1`. Remove that clamp
+   and the exit gate never opens.
+
+4. **`gen.py` contains string patches against MINIFIED output.** When the source
    changes shape the pattern stops matching and `gen.py` aborts, leaving the old
    `dist` in place. Each is guarded by `sys.exit`, so **run `gen.py` bare and read
    all of its output.** Do not pipe it through a grep filter — that is exactly how
@@ -145,10 +155,14 @@ guess.
 - One deliberate scroll → 53.5 months, on a 2.6s weighted tween
 - **No CSS scroll-snap at all.** It offers no control over duration or easing, so
   the module runs a discrete controller: one gesture from the previous section
-  lands on 6.4 months, one more goes to EVIIVE, and every input is swallowed
-  until that transition finishes. `CATCH_AT` 0.5 (how far the section must arrive
-  before it captures), `STEP_MS` 560, `COOL_MS` 160, easing `(0.4, 0, 0.2, 1)`.
-  A 6s watchdog releases the lock if anything fails
+  lands on 6.4 months, one more goes to EVIIVE. `CATCH_WHEN_IN` 0.8 (the section
+  must be 80% into the viewport, measured predictively from wheel velocity,
+  before it captures), `STEP_MS` 620, cooldown bounded 420–850ms, `OMEGA` 8.
+  Page motion is a critically damped spring seeded with the gesture's own
+  velocity, so it continues the reader's movement rather than restarting it.
+  There is **one** gate, on the way out of EVIIVE only: input is swallowed until
+  `settled()`. Nothing is locked on scene 1 or on the way in. A 6s watchdog
+  releases if anything fails
 - Background full-bleed behind the nav; headline and rail inset by `--nav-h`
 - Orb centred; layout driven by measured element width, not the window
 - Nav crossfades between the two headers, driven by the published theme
