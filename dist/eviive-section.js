@@ -116,32 +116,37 @@ export default function mount(host) {
      it was thrown, which is the definition of unpredictable. */
   const ARM_IN = 0.25
 
-  /* OPTION B - CONTINUE THE HAND.
-     The entry is a critically damped spring whose initial velocity is the
-     reader's own scroll speed at the moment of capture. There is no seam where
-     "you scrolling" becomes "it moving": the page keeps travelling at exactly
-     the speed the hand left it, and that motion decays into a long, perfectly
-     soft landing. Response is instant by construction - it cannot read as
-     stiff, because for the first frames it IS the reader's motion.
+  /* THE STOP MODEL (Ocean's design, and simpler than everything it replaced).
+     Natural scrolling ENDS one viewport above the section, exactly as a page
+     ends: everyone lands on "Our Platform" first, at rest. The next flick
+     performs a PRE-SET entrance - the section rises into the viewport on
+     golden's own scene curve while the reveal is already playing - identical
+     every time, because it always starts from the same place at rest.
 
-         x(t) = y + (d0 + (v0 + w*d0) * t) * e^(-w*t)
+     What this buys, by construction: no velocity hand-off (the page is not
+     moving when the entrance begins - the spring, its sampler, its snap floor
+     and its adaptive stiffness all became deletable); and no blow-past (the
+     boundary swallows what used to overshoot). The scene starts WITH the
+     glide, not after it, so the dark board is never on screen doing nothing -
+     dot 1 and the headline are already emerging while the section rises. */
+  const ENTER_MS = 1600         // full-viewport entrance; partial moves scale down
 
-     Closed form, evaluated per frame from the clock - no integration drift.
-     Critically damped is the only tuning with no overshoot, PROVIDED the
-     initial speed toward the target stays below w*|d0|; past that even a
-     critically damped spring crosses the line once. The clamp below enforces
-     it, so a hard throw becomes the fastest approach that still lands soft.
+  /* Golden's scene easing, verbatim (bezierEasing(0.37, 0, 0.63, 1), solved by
+     bisection like the original): measured off a reference video, chosen by
+     speed profile - "weight, not responsiveness". The page and the scene now
+     move in the same language. */
+  const EASE = (() => {
+    const bx = (t) => { const u = 1 - t; return 3*u*u*t*0.37 + 3*u*t*t*0.63 + t*t*t }
+    const by = (t) => { const u = 1 - t; return 3*u*t*t + t*t*t }
+    return (x) => {
+      if (x <= 0) return 0
+      if (x >= 1) return 1
+      let lo = 0, hi = 1, m = 0
+      for (let i = 0; i < 24; i++) { m = (lo + hi) / 2; if (bx(m) < x) lo = m; else hi = m }
+      return by((lo + hi) / 2)
+    }
+  })()
 
-     OMEGA is the whole feel: settle time ~ 6/OMEGA. 5/s lands visually in
-     ~1.1-1.3s - the "intentionally slow, smooth, elegant" band. Raising it
-     tightens the arrival, lowering it adds ceremony.
-
-     The two lessons already paid for stay enforced here: a spring never
-     arrives on its own, so there is an explicit landing condition and a hard
-     final write; and positions are rounded to integer pixels, because a
-     fractional scroll position resamples the sticky element every frame and
-     shimmers. */
-  const OMEGA    = 5            // 1/s - spring stiffness, sets the settle time
   const GUARD_MS = 6000
 
 
@@ -160,7 +165,6 @@ export default function mount(host) {
      ordinary scrolling" branch grabbed it straight back. Cleared only once the
      section has genuinely left the viewport. */
   let spent = false
-  let deliberate = false        // this gesture BEGAN with the section in view
 
   const api      = () => window.__eviive || null
   const progress = () => ((window.__eviiveScroll || {}).p) || 0
@@ -171,16 +175,6 @@ export default function mount(host) {
      the glide that brings it in. */
   const home = () => Math.round(pinEl.getBoundingClientRect().top + scrollY)
   const states = () => [home(), home()]
-
-  /* Catch a gesture that began before the section existed on screen and would
-     otherwise carry straight past it. Distinct from ARM_IN on purpose: ARM_IN is
-     where a DELIBERATE flick - one begun with the section already in view - takes
-     hold, and this is only a backstop for a throw that would overshoot. Without
-     it a hard flick from the previous section crossed three viewports and the
-     section never happened; with it set as low as ARM_IN, the very flick that
-     reveals the section also swallows it, and the reader never gets the beat
-     where they simply see it sitting there. */
-  const RESCUE_IN = 0.75
 
   const zone = () => {
     const r = pinEl.getBoundingClientRect()
@@ -201,57 +195,17 @@ export default function mount(host) {
 
   const glide = (y, then) => {
     const from = scrollY
-    const d0 = from - y
-    if (Math.abs(d0) < 2) { scrollTo(0, y); then(); return }
-    /* The hand-off. vel is the reader's live scroll speed (px/s, sampled below,
-       stale samples aged out). Clamped so the speed TOWARD the target never
-       exceeds w*|d0| - the no-overshoot bound - and away-from-target noise is
-       bounded symmetrically. With v0 = 0 (keyboard, standstill) this collapses
-       to the from-rest spring, which eases in and out on its own. */
-    /* vel and d share one coordinate (scrollY), so no sign juggling: entering
-       from above d0 < 0 and vel > 0, from below d0 > 0 and vel < 0 - in both
-       cases raw vel already points at the target.
-
-       A hand faster than the no-overshoot bound must not be CLAMPED - chopping
-       thousands of px/s in one frame is a brake-slam, measured at 17,800 px/s
-       of discontinuity, which is the very seam this spring exists to remove.
-       Instead the spring STIFFENS to meet the hand: w = v0/|d0| sits exactly on
-       the bound, so the throw is absorbed, the landing stays exponential, and a
-       harder flick simply arrives sooner - which is what thrown things do.
-       The exponential is self-limiting - it can never travel further than the
-       remaining distance, whatever the stiffness - so a high w is a hard catch,
-       not a teleport. The cap only bounds the settle to >=100ms against a
-       corrupt sample; real trackpads stay well inside it. */
-    const toward = d0 < 0 ? Math.max(0, vel) : Math.min(0, vel)
-    const w = Math.min(60, Math.max(OMEGA, Math.abs(toward) / Math.abs(d0)))
-    const lim = w * Math.abs(d0)
-    let v0 = Math.max(-lim, Math.min(vel, lim))
-    /* THE SNAP FLOOR. Capture fires on a gesture's FIRST event, so the sampled
-       speed is the flick's slow beginning - its peak comes several events
-       later, and by then those are swallowed as the tail. Seeded that low, the
-       spring neither launches (not snappy) nor visibly decays (no legible
-       ease-out); it just glides murkily. The launch is therefore floored at
-       60% of the no-overshoot bound: a gentle flick answers BRISKLY and then
-       rides the exponential down into position - about 90% of the travel in
-       the first half second and the last tenth spent arriving softly, which is
-       "snappy, then slowly easing into place" as a shape. A fast hand already
-       exceeds the floor and is untouched, so continuity for real throws stays.
-       A speed-up at the hand-off reads as the page ANSWERING; only slow-downs
-       read as a brake. The floor is skipped when the sampled motion points
-       AWAY from home - the overshoot catch wants its gentle settle-back, not a
-       snap-back. */
-    const away = toward === 0 && Math.abs(vel) > 50
-    if (!away) {
-      const floor = 0.6 * lim
-      if (Math.abs(v0) < floor) v0 = (d0 < 0 ? 1 : -1) * floor
-    }
+    const dist = y - from
+    if (Math.abs(dist) < 2) { scrollTo(0, y); then(); return }
+    const ms = Math.max(700, Math.min(ENTER_MS, ENTER_MS * Math.abs(dist) / innerHeight))
     const t0 = performance.now()
     if (raf) cancelAnimationFrame(raf)
     const step = (now) => {
-      const t = (now - t0) / 1000
-      const dd = (d0 + (v0 + w * d0) * t) * Math.exp(-w * t)
-      if (Math.abs(dd) >= 0.5 && t < 2.5) {
-        scrollTo(0, Math.round(y + dd))
+      const k = (now - t0) / ms
+      if (k < 1) {
+        /* Integer pixels: a fractional scroll position resamples the sticky
+           element every frame, and that shimmer reads as jitter. */
+        scrollTo(0, Math.round(from + dist * EASE(k)))
         raf = requestAnimationFrame(step)
         return
       }
@@ -262,40 +216,24 @@ export default function mount(host) {
     raf = requestAnimationFrame(step)
   }
 
-  /* Step to a state. The two steps are shaped differently on purpose.
-     Coming IN, the page travels a visible distance and the scene must not start
-     until it has arrived - that is the whole of "only animate once the section
-     fills the viewport", and it also keeps scrollTo and the WebGL frame off each
-     other's backs, since both run on the main thread.
-     Once pinned, the page motion is invisible: the section is stuck to the
-     viewport and only the scene changes. There the two run together, because
-     sequencing them would just be half a second of nothing. */
-  const engage = (i, sequenced) => {
+  /* Step to a state. The scene starts WITH the page motion, never after it:
+     the entrance and the reveal are one phrase, so elements are already
+     appearing while the section rises and the dark board never sits empty.
+     `busy` covers the page glide only - golden's 2.6s scene needs no lock:
+     the gesture's tail is swallowed by `ours`, the page cannot move while
+     `engaged`, and a fresh flick retargets the tween mid-flight, which
+     golden's easing absorbs by design (from = scroll.p). The one real wait in
+     the whole section is the at(1) exit gate. */
+  const engage = (i) => {
     idx = i
     engaged = true
     busy = true
     window.__eviiveDriving = true
     clearTimeout(guardT)
     guardT = setTimeout(release, GUARD_MS)        // never trap the reader
-    const goal = i === 0 ? 0.5 : 1
-    const play = () => {
-      const a = api()
-      if (!a || !a.to) return false
-      a.to(goal)
-      return true
-    }
-    /* `busy` covers the page glide and nothing more. Golden's scene runs 2.6
-       seconds, and blocking input for its full length is what read as stuck in
-       an earlier round. It does not need protecting: while the count runs the
-       tail is swallowed by `ours`, the page cannot move because `engaged` is
-       set, and a fresh deliberate flick simply retargets the tween mid-flight,
-       which golden's easing was built to absorb (from = scroll.p). The one real
-       wait in the whole section is the at(1) exit gate. */
-    if (!sequenced) play()
-    glide(states()[i], () => {
-      if (sequenced) play()
-      release()
-    })
+    const a = api()
+    if (a && a.to) a.to(i === 0 ? 0.5 : 1)
+    glide(states()[i], release)
   }
 
   /** @returns true if the gesture was consumed */
@@ -306,14 +244,14 @@ export default function mount(host) {
     if (engaged) {
       if (idx === null) idx = progress() >= 0.75 ? 1 : 0
       if (dir > 0) {
-        if (idx === 0) { engage(1, false); return true }
+        if (idx === 0) { engage(1); return true }
         /* THE ONLY WAIT. At EVIIVE the reader cannot go on until the transition
            has landed - that is the entire rule. Scrolling back is never gated. */
         if (!at(1)) return true
         engaged = false; spent = true
         return false                              // landed - on you go
       }
-      if (idx === 1) { engage(0, false); return true }
+      if (idx === 1) { engage(0); return true }
       engaged = false; spent = true
       return false                                // at 6.4 heading up - let them
     }
@@ -331,7 +269,7 @@ export default function mount(host) {
        none consumed, 1350px past the section. */
     const rc = pinEl.getBoundingClientRect()
     if (!spent && dir > 0 && rc.top < -2 && rc.bottom > 40) {
-      engage(progress() >= 0.75 ? 1 : 0, true)
+      engage(progress() >= 0.75 ? 1 : 0)
       return true
     }
 
@@ -339,16 +277,16 @@ export default function mount(host) {
     if (z === "away") { idx = null; return false }
     if (z === "approach") {
       if (dir < 0) return false                   // heading away, let them go
-      engage(0, true)                             // glide in, THEN reveal
+      engage(0)                                   // safety: boundary was bypassed
       return true
     }
     if (z === "leaving") {
       if (dir > 0) return false
-      engage(1, true)                             // re-entering from below
+      engage(1)                                   // re-entering from below
       return true
     }
     if (spent) return false                       // just let them out; do not re-grab
-    engage(progress() >= 0.75 ? 1 : 0, false)     // arrived by ordinary scrolling
+    engage(progress() >= 0.75 ? 1 : 0)            // arrived by ordinary scrolling
     return true
   }
 
@@ -368,45 +306,61 @@ export default function mount(host) {
     }
   }
 
+  /* The scrollY of the stop: the section's top exactly at the fold's bottom,
+     one viewport of "Our Platform" on screen. */
+  const stopY = () => Math.round(pinEl.getBoundingClientRect().top + scrollY) - innerHeight
+
   const onWheel = (e) => {
     const now = performance.now()
     const quiet = now - lastInputAt
     lastInputAt = now                    // advances for swallowed events too
     if (busy) { e.preventDefault(); return }
-    /* NOTHING reaches the page while the section is engaged. Events below
-       TOLERANCE used to slip through as ordinary scrolling, which was harmless
-       when the section had a viewport of pinned travel to absorb them. With no
-       travel at all, eight pixels was enough to move the composition out from
-       under itself and turn "inside" into "leaving" - after which every
-       downward flick read as the reader asking to leave, and the scene never
-       reached EVIIVE. Between the two scenes the view must not move, so here it
-       cannot move at all. */
+    /* NOTHING reaches the page while the section is engaged - between the two
+       scenes the view must not move, so here it cannot move at all. */
     if (engaged) e.preventDefault()
     if (Math.abs(e.deltaY) < 1) return
-    if (quiet > GESTURE_GAP) {
-      armed = true; ours = false; accum = 0
-      deliberate = zone() !== "away"    // begun in view: this flick is for us
+    if (quiet > GESTURE_GAP) { armed = true; ours = false; accum = 0 }
+
+    /* THE STOP. On the way down, before the section has been visited, natural
+       scrolling ends here the way a page ends. An event that would cross lands
+       ON the stop and finishes its gesture there - the browser does exactly
+       this at a document's end, so the hand already knows the feel. A fresh
+       flick taken AT the stop is the entrance. Nothing else can start it, so
+       nothing can blow past it. */
+    if (!engaged && !spent && e.deltaY > 0) {
+      const b = stopY()
+      /* The stop exists only AT or ABOVE itself. "scrollY >= b" alone is also
+         true a whole viewport BELOW the section - and the moment a leaving
+         reader crosses the section's bottom, the offered-again reset clears
+         `spent`, so the same flick's remaining events walked into this branch
+         and dragged them backwards up into an entrance. Seen live: exit at
+         y=1999, three events later engaged again, gliding up to 1350. */
+      if (Math.abs(scrollY - b) <= 1) {
+        e.preventDefault()
+        if (!armed) return                        // tail of the gesture that arrived
+        accum += e.deltaY
+        if (Math.abs(accum) < TOLERANCE) return
+        armed = false; ours = true
+        engage(0)                                 // the pre-set entrance
+        return
+      }
+      if (scrollY < b && scrollY + e.deltaY >= b) {
+        e.preventDefault()
+        scrollTo(0, b)                            // land on the stop, like page end
+        armed = false; ours = true                // this gesture is finished here
+        return
+      }
     }
+
     if (!armed) {
-      /* Same gesture, already decided - but if WE took it, its tail is ours
-         too. A flick's momentum can outlast the whole transition, and those
-         leftovers used to reach the browser the moment `busy` cleared and
-         scroll the page straight back out of the section that had just
-         arrived. */
+      /* Same gesture, already decided - and if WE took it, its tail is ours:
+         a flick's momentum outlasts the transition, and leftovers reaching the
+         browser used to scroll the page straight back out. */
       if (ours) e.preventDefault()
       return
     }
     accum += e.deltaY
     if (Math.abs(accum) < TOLERANCE) return
-    /* Leak an undeliberate gesture only while the section is still genuinely
-       approaching: top edge below the fold AND coverage under RESCUE_IN. The
-       old test read coverage alone, which falls back under the threshold once
-       the section has been overshot - so a burst that stepped over it kept
-       leaking forever and the controller never heard about it. Once home has
-       been crossed every event reaches onStep, which owns the catch. */
-    const rt = pinEl.getBoundingClientRect().top
-    if (!deliberate && !engaged && rt > 0 &&
-        (innerHeight - rt) / innerHeight < RESCUE_IN) return
     const before = engaged
     if (fire(accum > 0 ? 1 : -1, e)) { armed = false; ours = true }
     else if (before) armed = false     // that WAS the decision: they are leaving
@@ -417,19 +371,32 @@ export default function mount(host) {
     touchAcc = 0
     armed = !busy
     ours = false
-    deliberate = zone() !== "away"
   }
   const onTouchMove = (e) => {
     if (busy || engaged) { e.preventDefault() }
     if (busy) return
     const y = e.touches[0].clientY
-    touchAcc += touchY - y
+    const dy = touchY - y
     touchY = y
+    touchAcc += dy
+    if (!engaged && !spent && dy > 0) {
+      const b = stopY()
+      if (Math.abs(scrollY - b) <= 1) {
+        e.preventDefault()
+        if (!armed || Math.abs(touchAcc) < 30) return
+        armed = false; ours = true
+        engage(0)
+        return
+      }
+      if (scrollY < b && scrollY + dy * 2 >= b) {
+        e.preventDefault()
+        scrollTo(0, b)
+        armed = false; ours = true
+        return
+      }
+    }
     if (!armed) { if (ours) e.preventDefault(); return }
     if (Math.abs(touchAcc) < 30) return
-    const rtt = pinEl.getBoundingClientRect().top
-    if (!deliberate && !engaged && rtt > 0 &&
-        (innerHeight - rtt) / innerHeight < RESCUE_IN) return
     if (fire(touchAcc > 0 ? 1 : -1, e)) { armed = false; ours = true }
   }
 
@@ -438,34 +405,18 @@ export default function mount(host) {
     const d = KEYS[e.key]
     if (!d) return
     if (busy) { e.preventDefault(); return }
+    if (!engaged && !spent && d > 0) {
+      const b = stopY()
+      const step = e.key === "ArrowDown" ? 80 : innerHeight * 0.9
+      if (Math.abs(scrollY - b) <= 1) { e.preventDefault(); engage(0); return }
+      if (scrollY < b && scrollY + step >= b) { e.preventDefault(); scrollTo(0, b); return }
+    }
     fire(d, e)
   }
 
   /* Re-arm the reveal once the section is completely gone below the fold, so
      coming back to it plays rather than showing a finished composition. */
-  /* Live scroll velocity, px/s, for the spring's hand-off. An EMA over the
-     last few scroll events; a sample older than 120ms is treated as rest, so a
-     reader who stopped three seconds ago does not inherit a phantom speed from
-     their previous gesture. */
-  let vel = 0, vLastY = scrollY, vLastT = performance.now()
-  const sampleVel = () => {
-    const now = performance.now()
-    const dt = now - vLastT
-    if (dt <= 0) return
-    const inst = (scrollY - vLastY) / dt * 1000
-    /* Attack fast, release smooth - the same asymmetry the odometer needed. A
-       symmetric average lags a rising speed by several frames, so the spring
-       inherited 60% of the hand and the missing 40% appeared as a velocity step
-       at the hand-off. */
-    vel = dt > 120 ? 0
-        : Math.abs(inst) > Math.abs(vel) ? vel * 0.25 + inst * 0.75
-        : vel * 0.6 + inst * 0.4
-    vLastY = scrollY
-    vLastT = now
-  }
-
   const onScroll = () => {
-    sampleVel()
     if (busy) return
     const r = pinEl.getBoundingClientRect()
     const below = r.top >= innerHeight        // still coming: reader is above it
@@ -498,6 +449,12 @@ export default function mount(host) {
       a.seek(0.5)
     } else a.seek(0)
   }, 120)
+
+  // debug window into the closure - read-only, costs nothing when unused
+  window.__eviiveDbg = {
+    get st() { return { busy, engaged, spent, armed, ours, idx,
+      stop: stopY(), y: scrollY, z: zone(), p: progress() } }
+  }
 
   addEventListener("scroll", onScroll, { passive: true })
   addEventListener("wheel", onWheel, { passive: false })
