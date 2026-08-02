@@ -167,17 +167,13 @@ guess.
    gated the publish loop as well as the fade, so turning it off silently killed
    the overrides' event stream. Also removed.
 
-2. **RESOLVED — and do NOT "fix" it again.** Frame `nFifHam5M` is 300vh and
-   `.pin` is `calc(var(--vh) * 3)`. They match, deliberately. Two states need
-   three viewports: travel is `pinH - vh` = 200vh, the states sit 100vh apart,
-   and the remaining **100vh is dwell** — the stretch where the section stays
-   pinned after the final state. That dwell is what lets the closing transition
-   finish; without it the last snap point coincides with the last pinned pixel
-   and any momentum unpins the section mid-animation. A reviewer reading this
-   file at an earlier revision reported the frame/pin as mismatched; it is not.
-   **Rule: the Framer frame height must always equal `.pin`.** Both wrong ways
-   were hit in one day — frame shorter overflows into Metrics, frame longer
-   leaves a dead dark band.
+2. **Frame height: 200vh, and it must equal `.pin`.** Two states, travel
+   `pinH - vh` = 100vh, state 2 at the last pinned pixel. There is deliberately
+   NO dwell: the controller's exit gate holds the reader at EVIIVE until the
+   transition lands, so a spare viewport of pinned scrolling would only mean the
+   section sitting still while the page moved. Both mismatches were hit in one
+   day — frame shorter than `.pin` overflows into Metrics, frame longer leaves a
+   dead dark band.
 
 3. **Orb reads softer than `golden/eviive-section-v1.2-responsive.html`.** Raised
    twice, never confirmed either way by Ocean. Compare against the golden before
