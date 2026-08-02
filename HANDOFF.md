@@ -248,14 +248,22 @@ guess.
   crossed the section's bottom the offered-again reset cleared `spent` and the
   same flick's remaining events dragged them backwards into an entrance.
 
-  **The choreography plays ONCE per page load** (Ocean's rule). `spent` is
-  permanent: after the reader is released from either end, every capture path
-  closes - the stop, the hint, the entrance, re-entry from below - and the
-  section scrolls by like any other, resting in whatever scene it finished.
-  In-section stepping (EVIIVE -> scene 1 on scroll-up BEFORE leaving) survives,
-  because it lives on `engaged`, not `spent`. The outside-reset clears
-  engagement only; do not "offer it again" by clearing `spent` there - that
-  exact reset once let a leaving flick's own tail drag the reader back in.
+  **The choreography plays ONCE per page load - but only a COMPLETED read
+  spends it.** `sawFull` flips when EVIIVE actually lands (observed by the
+  200ms invariant tick); a release then sets `spent`, which stays permanent.
+  Backing out upward from scene 1 does NOT spend: it tweens the scene back to
+  0 (the abandon-rewind - tweened so the composition plays backwards rather
+  than blanking mid-view) and leaves the stop, hint and entrance armed for a
+  replay. This distinction exists because a ~24px accidental up-wobble at
+  scene 1 used to silently kill the whole choreography for the page load -
+  Ocean's exact repro: interrupt the entrance, scroll up, come back, section
+  frozen at scene 1 forever, EVIIVE unreachable without a refresh.
+  In-section stepping lives on `engaged`, not `spent`. The outside-reset
+  clears engagement only; do not "offer it again" by clearing `spent` there -
+  that exact reset once let a leaving flick's own tail drag the reader back
+  in. The hint is re-evaluated by the invariant tick as well as by scroll
+  events - the rewind finishes after the reader stops moving, and an
+  event-only check left the arrow hidden at a freshly re-armed stop.
 
   **The overshoot catch survives as a safety net** (not spent + home crossed +
   heading down = catch): the boundary makes it nearly unreachable, but if it is

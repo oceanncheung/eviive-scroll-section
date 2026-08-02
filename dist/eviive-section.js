@@ -194,6 +194,13 @@ export default function mount(host) {
      ordinary scrolling" branch grabbed it straight back. Cleared only once the
      section has genuinely left the viewport. */
   let spent = false
+  /* True once EVIIVE has actually LANDED during this visit. Only that makes a
+     release spend the choreography - backing out upward from scene 1 leaves it
+     armed, because "seen half the story" is not "seen the story". Without this
+     distinction a ~24px accidental up-wobble at scene 1 silently killed the
+     stop, the arrow and the entrance for the rest of the page load, and the
+     symptom surfaced minutes later as "the section stopped working". */
+  let sawFull = false
 
   const api      = () => window.__eviive || null
   const progress = () => ((window.__eviiveScroll || {}).p) || 0
@@ -321,11 +328,23 @@ export default function mount(host) {
         /* THE ONLY WAIT. At EVIIVE the reader cannot go on until the transition
            has landed - that is the entire rule. Scrolling back is never gated. */
         if (!at(1)) return true
-        engaged = false; spent = true
+        engaged = false; spent = true; sawFull = true
         return false                              // landed - on you go
       }
       if (idx === 1) { engage(0); return true }
-      engaged = false; spent = true
+      engaged = false
+      spent = sawFull                             // half-read: stay armed for a replay
+      /* Abandoning a half-read visit REWINDS the story - tweened, not seeked,
+         so the composition plays backwards as the reader retreats instead of
+         blanking under them. Without this the scene froze at 0.5: a shallow
+         retreat re-armed the stop with 6.4 stuck in the peek band and the
+         hint refusing to show (it requires p ~ 0), and the replay opened on a
+         finished board. The outside reset's seek(0) remains as the backstop
+         for full retreats. */
+      if (!sawFull) {
+        const a = api()
+        if (a && a.to) a.to(0)
+      }
       return false                                // at 6.4 heading up - let them
     }
 
@@ -519,6 +538,10 @@ export default function mount(host) {
     const d = KEYS[e.key]
     if (!d) return
     if (busy) { e.preventDefault(); return }
+    /* Same unconditional block wheel has: while engaged a key must never leak
+       to the page, even if the step logic throws. Release still works - the
+       event after the release finds engaged false. */
+    if (engaged) e.preventDefault()
     if (!engaged && !spent && d > 0) {
       const b = stopY()
       const step = e.key === "ArrowDown" ? 80 : innerHeight * 0.9
@@ -569,6 +592,7 @@ export default function mount(host) {
     if (!below && !above) return
     idx = null
     engaged = false
+    if (!spent) sawFull = false
     /* `spent` is PERMANENT for the page load (Ocean: "this animation only need
        to play once"). The choreography - stop, hint, entrance, reveal - is a
        first-impression device; once the reader has been released from either
@@ -619,6 +643,12 @@ export default function mount(host) {
      instead of forever. */
   const heal = { p: -1, still: 0 }
   const healT = setInterval(() => {
+    /* The hint's conditions can BECOME true with no scroll event to notice -
+       the abandon-rewind finishes after the reader has stopped moving, and an
+       event-driven check alone left the arrow hidden at a freshly re-armed
+       stop. This tick is the time-driven half of that check. */
+    updateHint()
+    if (engaged && progress() >= 0.99) sawFull = true
     if (!engaged || busy) { heal.p = progress(); heal.still = 0; return }
     if (Math.abs(pinEl.getBoundingClientRect().top) > 2) { heal.still = 0; return }
     const goal = idx === 1 ? 1 : 0.5
