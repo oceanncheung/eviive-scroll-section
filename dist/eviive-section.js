@@ -20,6 +20,13 @@ export default function mount(host) {
     vp.w = w; vp.h = h
     host.style.setProperty("--vw", w + "px")
     host.style.setProperty("--vh", h + "px")
+    /* The Framer frame is 100vh, which on iOS is the LARGEST viewport - while
+       the toolbar is visible the frame runs taller than the pin by the toolbar
+       height, leaving a dead band below the composition. Framer's API rejects
+       dvh, so the module sizes its own frame: the section element tracks the
+       real visible height through every toolbar collapse and expand. */
+    const sec = host.parentElement
+    if (sec) sec.style.height = h + "px"
     for (const bp of BREAKPOINTS) host.classList.toggle("lte-" + bp, w <= bp)
     dispatchEvent(new Event("resize"))
   }
@@ -623,6 +630,7 @@ export default function mount(host) {
     hint.remove()
     style.remove(); driverEl.remove()
     if (blobUrl) URL.revokeObjectURL(blobUrl)
+    if (host.parentElement) host.parentElement.style.height = ""
     host.innerHTML = ""
   }
 }

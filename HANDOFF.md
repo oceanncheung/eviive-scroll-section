@@ -198,7 +198,12 @@ guess.
   swallow it in flight, so the settle guard resolves any unvisited rest
   position after 150ms: shallow -> back to the stop, half-plus entered ->
   carried forward (entrance + reveal), past home -> adopted. visualViewport
-  feeds syncVP for the collapsing Safari toolbar. The next flick
+  feeds syncVP for the collapsing Safari toolbar, and syncVP sizes the FRAME
+  itself (host.parentElement, inline px) because Framer's API rejects dvh - the
+  100vh frame would otherwise run a toolbar-height taller than the pin on iOS.
+  The homepage's Tablet (810px) and Phone (520px) breakpoints are replicas
+  sharing the Desktop structure, so the section exists there; behaviour, not
+  presence, was the iPad problem. The next flick
   performs a PRE-SET entrance: the section rises into the viewport over
   `ENTER_MS` 1800ms on a pronounced ease-out, cubic-bezier(0.25, 0.10, 0.10, 1)
   - Ocean's brief verbatim: "very very smooth and grounded... very calm and
