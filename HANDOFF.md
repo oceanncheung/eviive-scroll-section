@@ -175,9 +175,24 @@ guess.
   design): natural scrolling ENDS one viewport above the section, the way a
   page ends - everyone lands on "Our Platform" first, at rest. The next flick
   performs a PRE-SET entrance: the section rises into the viewport over
-  `ENTER_MS` 1600ms on golden's own scene curve (bezierEasing(0.37, 0, 0.63,
-  1)), while the scene reveal is ALREADY playing, so dot 1 and the headline are
-  emerging during the rise and the dark board never sits empty. One more flick
+  `ENTER_MS` 1800ms on a pronounced ease-out, cubic-bezier(0.25, 0.10, 0.10, 1)
+  - Ocean's brief verbatim: "very very smooth and grounded... very calm and
+  authoritative". 11% at 180ms, 52% at 450ms, then the whole second half of the
+  duration decelerates through the last 14%. Golden's symmetric curve stays
+  inside the scene, whose own comments warn its ease-in head reads as lag when
+  the reader initiated the motion. The scene reveal is ALREADY playing during
+  the rise, so dot 1 and the headline are emerging and the dark board never
+  sits empty.
+
+  **The stop is a self-healing dead zone, not an exact position.** On a real
+  trackpad, momentum ticks already committed by the compositor can land a few
+  dozen pixels past the boundary before preventDefault bites; requiring
+  |scrollY - stop| <= 1 left that peek sitting there with every event leaking.
+  The at-stop branch now owns everything from the stop to half an entrance
+  (healing drift back before deciding anything), and a settle guard glides a
+  RESTING peek back after 150ms of quiet - so anchors and programmatic scrolls
+  heal too. Bounded at half a viewport so it can never reach below a passed
+  section. One more flick
   → EVIIVE. One gate only, leaving EVIIVE before the morph lands. `GESTURE_GAP`
   140ms, `TOLERANCE` 24, 6s watchdog.
 

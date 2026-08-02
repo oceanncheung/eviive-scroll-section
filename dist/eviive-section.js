@@ -129,15 +129,20 @@ export default function mount(host) {
      boundary swallows what used to overshoot). The scene starts WITH the
      glide, not after it, so the dark board is never on screen doing nothing -
      dot 1 and the headline are already emerging while the section rises. */
-  const ENTER_MS = 1600         // full-viewport entrance; partial moves scale down
+  const ENTER_MS = 1800         // full-viewport entrance; partial moves scale down
 
-  /* Golden's scene easing, verbatim (bezierEasing(0.37, 0, 0.63, 1), solved by
-     bisection like the original): measured off a reference video, chosen by
-     speed profile - "weight, not responsiveness". The page and the scene now
-     move in the same language. */
+  /* Ocean's brief for the entrance, verbatim: "very very smooth and grounded
+     movement for a biotech company that saves lives by detecting cancer - very
+     calm and authoritative." That is an EASE-OUT, not golden's symmetric scene
+     curve: motion begins at once but unhurried (y1 = 0.1 gives it quiet
+     confidence rather than hesitation), carries, and then spends the entire
+     second half of its time decelerating into place. Golden's (0.37, 0, 0.63,
+     1) stays where it belongs - inside the scene - whose ease-in head golden
+     itself warns reads as lag when the reader is the one who scrolled. */
   const EASE = (() => {
-    const bx = (t) => { const u = 1 - t; return 3*u*u*t*0.37 + 3*u*t*t*0.63 + t*t*t }
-    const by = (t) => { const u = 1 - t; return 3*u*t*t + t*t*t }
+    const x1 = 0.25, y1 = 0.10, x2 = 0.10, y2 = 1.00
+    const bx = (t) => { const u = 1 - t; return 3*u*u*t*x1 + 3*u*t*t*x2 + t*t*t }
+    const by = (t) => { const u = 1 - t; return 3*u*u*t*y1 + 3*u*t*t*y2 + t*t*t }
     return (x) => {
       if (x <= 0) return 0
       if (x >= 1) return 1
@@ -197,7 +202,7 @@ export default function mount(host) {
     const from = scrollY
     const dist = y - from
     if (Math.abs(dist) < 2) { scrollTo(0, y); then(); return }
-    const ms = Math.max(700, Math.min(ENTER_MS, ENTER_MS * Math.abs(dist) / innerHeight))
+    const ms = Math.max(240, Math.min(ENTER_MS, ENTER_MS * Math.abs(dist) / innerHeight))
     const t0 = performance.now()
     if (raf) cancelAnimationFrame(raf)
     const step = (now) => {
@@ -335,8 +340,19 @@ export default function mount(host) {
          `spent`, so the same flick's remaining events walked into this branch
          and dragged them backwards up into an entrance. Seen live: exit at
          y=1999, three events later engaged again, gliding up to 1350. */
-      if (Math.abs(scrollY - b) <= 1) {
+      /* At-or-past the stop, up to half an entrance. Requiring exactness here
+         (|scrollY - b| <= 1) assumed the clamp always lands clean - on a real
+         trackpad, momentum ticks already committed by the compositor can carry
+         the page a few dozen pixels past before our preventDefault bites, and
+         once drifted NEITHER branch matched: the peek just sat there and every
+         event leaked. This band owns the whole dead zone and heals any drift
+         back onto the stop before deciding anything. Bounded at half a
+         viewport so it can never reach below a passed section - that hole is
+         documented above. */
+      const past = scrollY - b
+      if (past >= -1 && past < innerHeight * 0.5) {
         e.preventDefault()
+        if (past > 1) { scrollTo(0, b); return } // heal first, decide next event
         if (!armed) return                        // tail of the gesture that arrived
         accum += e.deltaY
         if (Math.abs(accum) < TOLERANCE) return
@@ -381,8 +397,10 @@ export default function mount(host) {
     touchAcc += dy
     if (!engaged && !spent && dy > 0) {
       const b = stopY()
-      if (Math.abs(scrollY - b) <= 1) {
+      const past = scrollY - b
+      if (past >= -1 && past < innerHeight * 0.5) {
         e.preventDefault()
+        if (past > 1) { scrollTo(0, b); return }
         if (!armed || Math.abs(touchAcc) < 30) return
         armed = false; ours = true
         engage(0)
@@ -408,7 +426,12 @@ export default function mount(host) {
     if (!engaged && !spent && d > 0) {
       const b = stopY()
       const step = e.key === "ArrowDown" ? 80 : innerHeight * 0.9
-      if (Math.abs(scrollY - b) <= 1) { e.preventDefault(); engage(0); return }
+      const past = scrollY - b
+      if (past >= -1 && past < innerHeight * 0.5) {
+        e.preventDefault()
+        if (past > 1) { scrollTo(0, b); return }
+        engage(0); return
+      }
       if (scrollY < b && scrollY + step >= b) { e.preventDefault(); scrollTo(0, b); return }
     }
     fire(d, e)
@@ -416,7 +439,21 @@ export default function mount(host) {
 
   /* Re-arm the reveal once the section is completely gone below the fold, so
      coming back to it plays rather than showing a finished composition. */
+  /* A peek that comes to REST (momentum died in the dead zone, an anchor, a
+     programmatic scroll) heals on its own: no waiting for the next gesture. */
+  let settleT = 0
   const onScroll = () => {
+    if (!busy && !engaged && !spent) {
+      const rt = pinEl.getBoundingClientRect().top
+      if (rt < innerHeight - 2 && rt > innerHeight * 0.5) {
+        clearTimeout(settleT)
+        settleT = setTimeout(() => {
+          if (busy || engaged || spent) return
+          const rr = pinEl.getBoundingClientRect().top
+          if (rr < innerHeight - 2 && rr > innerHeight * 0.5) glide(stopY(), () => {})
+        }, 150)
+      }
+    }
     if (busy) return
     const r = pinEl.getBoundingClientRect()
     const below = r.top >= innerHeight        // still coming: reader is above it
@@ -474,6 +511,7 @@ export default function mount(host) {
     removeEventListener("resize", syncVP)
     if (raf) cancelAnimationFrame(raf)
     clearTimeout(guardT)
+    clearTimeout(settleT)
     window.__eviiveOwned = false
     removeEventListener("scroll", onScroll)
     removeEventListener("wheel", onWheel)
