@@ -94,10 +94,31 @@ export default function mount(host) {
      A wheel gesture is dozens of events. Handling each one would fire every
      step at once, so after acting we swallow the rest of the burst until the
      reader has been still for COOL_MS. */
-  const STEP_MS  = 620          // scroll travel between states
+  const STEP_MS  = 560          // scroll travel between states
   const COOL_MS  = 160          // quiet time that ends one gesture
   const GUARD_MS = 6000         // watchdog: never stay locked forever
-  const easeOut  = (t) => 1 - Math.pow(1 - t, 3)
+
+  /* Ease-out cubic reaches its MAXIMUM velocity at t=0, so every move began
+     with a yank and then merely decayed — read as stiff however short it was.
+     A bezier with a real acceleration phase picks up quickly without the jerk
+     and settles over a long tail, which is what "snappy but not brittle" wants.
+     Measured across candidates at fractions of the duration:
+       (0.32,0.72,0,1)  .46 .78 .96 .99   <- 46% gone in the first 15%: a yank
+       easeOutCubic     .39 .58 .87 .98   <- same fault, milder
+       (0.4,0,0.2,1)    .07 .24 .78 .96   <- a real S: pickup, travel, settle
+     The third is the one that reads as quick rather than abrupt. */
+  const bez = (x1, y1, x2, y2) => {
+    const cx = (t) => { const u = 1 - t; return 3*u*u*t*x1 + 3*u*t*t*x2 + t*t*t }
+    const cy = (t) => { const u = 1 - t; return 3*u*u*t*y1 + 3*u*t*t*y2 + t*t*t }
+    return (x) => {
+      if (x <= 0) return 0
+      if (x >= 1) return 1
+      let lo = 0, hi = 1, m = 0
+      for (let i = 0; i < 20; i++) { m = (lo + hi) / 2; cx(m) < x ? lo = m : hi = m }
+      return cy((lo + hi) / 2)
+    }
+  }
+  const easeOut = bez(0.4, 0, 0.2, 1)
 
   let idx = null                // 0 = 6.4 months, 1 = EVIIVE, null = not engaged
   let locked = false            // transition in flight: swallow everything
