@@ -160,9 +160,23 @@ guess.
   the module runs a discrete controller. The sequence: the section rises under
   ordinary scrolling with the scene held at `p = 0`; one flick glides it to fill
   the viewport and *then* plays the 6.4 reveal; one more flick goes to EVIIVE.
-  `ARM_IN` 0.25, `GESTURE_GAP` 140ms, `TOLERANCE` 24, glide 340–560ms scaled by
-  distance, easing `1 - (1-t)^5`, scene `DUR` 900ms. One gate only, on the way
-  out of EVIIVE. A 6s watchdog releases if anything fails.
+  `ARM_IN` 0.25, `RESCUE_IN` 0.75, `GESTURE_GAP` 140ms, `TOLERANCE` 24, glide
+  340–560ms scaled by distance, easing `1 - (1-t)^5`, scene 900ms in / 1300ms to
+  EVIIVE. One gate only, on the way out. A 6s watchdog releases if anything fails.
+
+  **Two capture triggers, and they are not the same.** `ARM_IN` is where a
+  *deliberate* flick takes hold — one begun with the section already in view.
+  `RESCUE_IN` is a backstop for a flick begun before the section existed on
+  screen, which would otherwise carry three viewports past it. Collapsing them
+  into one number breaks something either way: too low and the flick that
+  reveals the section also swallows it, so the reader never gets the beat where
+  they simply see it; too high and a hard throw sails by and the section never
+  happens. Both failures were observed.
+
+  **A consumed gesture owns its tail** (`ours`). A flick's momentum outlasts the
+  transition, and those leftovers used to reach the browser the instant `busy`
+  cleared and scroll the page back out of the section — which read both as the
+  section refusing to hold *and* as the reveal never playing.
 
   **Read the gesture, never the event.** One trackpad flick is 30–60 wheel
   events across ~1s — a finger burst plus an OS-synthesised momentum tail, and

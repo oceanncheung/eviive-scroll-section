@@ -376,7 +376,19 @@ nearly 4 years longer</span>
       const prev = spin[key] === undefined ? pos : spin[key]
       spin[key] = pos
       const speed = Math.abs(pos - prev)
-      blurAmt[key] = blurAmt[key] * 0.84 + speed * 0.16
+      /* Attack instantly, release fast, and END - do not asymptote.
+         A symmetric 0.84-per-frame average lags the motion by about thirty
+         frames, so the wheels came to rest and then went on blurring, masking
+         and re-rasterising for another 800ms: the number reached its value and
+         carried on flickering underneath it. Rising to meet the speed leaves the
+         spin looking exactly as it did; the change is all in the tail, which now
+         lands with the digits instead of trailing them. The hard zero matters as
+         much as the rate - an exponential never actually reaches nothing, and
+         everything downstream of this is thresholded. */
+      blurAmt[key] = speed > blurAmt[key]
+        ? speed
+        : blurAmt[key] * 0.55 + speed * 0.45
+      if (blurAmt[key] < 1e-4) blurAmt[key] = 0
 
       // edge softness follows speed — continuous, so nothing ever snaps
       /* While the wheel spins, which digit is showing is meaningless — so the
@@ -389,7 +401,12 @@ nearly 4 years longer</span>
       col.style.setProperty("--fade", (2.4 + feather * 11.0).toFixed(2) + "%")
 
       const px = clamp(blurAmt[key] * cellPx * 0.30, 0, 9)
-      st.style.filter = px > 0.3 ? `url(#mb-${key})` : "none"
+      /* Attaching or removing a filter swaps the rasterisation path, so the
+         glyph is redrawn differently on that one frame. At the old 0.3 the
+         columns were each still visibly soft when they switched, and they
+         switched on different frames - three separate pops after the number had
+         already landed. Below a tenth of a pixel there is nothing left to pop. */
+      st.style.filter = px > 0.1 ? `url(#mb-${key})` : "none"
       const fe = document.getElementById(`fe-${key}`)
       if (fe) fe.setAttribute("stdDeviation", `0 ${px.toFixed(2)}`)
 
@@ -1217,7 +1234,13 @@ nearly 4 years longer</span>
      stuck. Shortening beats re-curving - an animation that feels slow is almost
      never the wrong easing, it is the wrong duration - and 900 keeps the
      acceleration legible while staying inside what a reader will sit through. */
-  const DUR=900;
+  /* The two legs are not the same event. Reaching 6.4 is an arrival and wants
+     to be brisk - it happens right after the page has finished gliding, and any
+     slack there reads as the section refusing to hand control back. The morph
+     to 53.5 IS the payload: the orb changes material, the ground inverts and the
+     rail rescales, and at 900 it went by too fast to read. */
+  const DUR_IN = 900, DUR_OUT = 1300;
+  const durFor = (t) => (t >= 0.75 ? DUR_OUT : DUR_IN);
   let target=0, from=0, t0=-1e9;
 
   const ENTER_AT = 0.75;   /* intro is finished this far into the approach */
@@ -1261,7 +1284,7 @@ nearly 4 years longer</span>
   readScroll();
 
   function frame(now){
-    scroll.p = reduced ? target : from + (target-from)*EASE(clamp((now-t0)/DUR,0,1));
+    scroll.p = reduced ? target : from + (target-from)*EASE(clamp((now-t0)/durFor(target),0,1));
     const p = scroll.p;
 
     try{
