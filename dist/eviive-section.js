@@ -109,11 +109,20 @@ export default function mount(host) {
     return [top, top + innerHeight]
   }
   const progress = () => ((window.__eviiveScroll || {}).p) || 0
+  /* How far the section must have arrived before a gesture belongs to it.
+     At 1 it captured the moment its first pixel appeared, which made the
+     previous section feel skipped: you would still be reading Our Platform,
+     scroll once, and be pulled straight in. At 0.5 the section has to reach the
+     middle of the screen first — until then scrolling is ordinary, and the
+     hand-off reads as a decision rather than an ambush. Applied symmetrically
+     so coming back up behaves the same way. */
+  const CATCH_AT = 0.5
+
   const zone = () => {
     const r = pinEl.getBoundingClientRect()
     if (r.top <= 0 && r.bottom >= innerHeight) return "inside"
-    if (r.top > 0 && r.top < innerHeight) return "approach"
-    if (r.bottom < innerHeight && r.bottom > 0) return "leaving"
+    if (r.top > 0 && r.top < innerHeight * CATCH_AT) return "approach"
+    if (r.bottom < innerHeight && r.bottom > innerHeight * (1 - CATCH_AT)) return "leaving"
     return "away"
   }
 
