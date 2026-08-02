@@ -79,78 +79,125 @@ export default function mount(host) {
   document.body.appendChild(driverEl)
 
   const section = host.parentElement
-  /* OUR OWN SNAP.
-     CSS scroll-snap cannot be tuned - no duration, no easing - and Chrome lands
-     it as an abrupt magnet. Driving it here costs one scroll listener and buys
-     the whole feel: a quick departure that decelerates into the state instead of
-     arriving with a clack. It also removes the old trap risk, because nothing
-     declares the page snap-mandatory any more; if this code did nothing at all,
-     ordinary scrolling is what would be left.
+  /* DISCRETE SCROLL CONTROLLER.
+     The section behaves as two deliberate steps rather than a scrollable
+     region: one gesture from the previous section lands on 6.4 months, one more
+     goes to EVIIVE, and only when that transition has actually finished does
+     ordinary scrolling resume. During a transition every input is swallowed —
+     the animation is not something the reader can outrun.
 
-     Three rules. Only while the section owns the viewport. Never while the
-     reader is still moving. And never past the second state until the animation
-     has actually finished - the section holds them there rather than letting the
-     next one arrive over the top of an unfinished transition. */
-  const SNAP_MS = 460
-  const IDLE_MS = 90
-  const easeOut = (t) => 1 - Math.pow(1 - t, 3)   // leaves fast, lands soft
+     This is scroll-jacking and it is chosen, not accidental. It is confined to
+     the moments the section owns the viewport, every listener is removed on
+     unmount, and a watchdog releases the lock if anything ever fails, so the
+     worst case is ordinary scrolling rather than a page that cannot move.
 
-  let snapping = false
-  let snapRaf = 0
-  let idle = 0
+     A wheel gesture is dozens of events. Handling each one would fire every
+     step at once, so after acting we swallow the rest of the burst until the
+     reader has been still for COOL_MS. */
+  const STEP_MS  = 620          // scroll travel between states
+  const COOL_MS  = 160          // quiet time that ends one gesture
+  const GUARD_MS = 6000         // watchdog: never stay locked forever
+  const easeOut  = (t) => 1 - Math.pow(1 - t, 3)
+
+  let idx = null                // 0 = 6.4 months, 1 = EVIIVE, null = not engaged
+  let locked = false            // transition in flight: swallow everything
+  let cooling = false
+  let raf = 0, coolT = 0, guardT = 0, touchY = 0
 
   const states = () => {
     const top = pinEl.getBoundingClientRect().top + scrollY
     return [top, top + innerHeight]
   }
-  const settled = () => (((window.__eviiveScroll || {}).p) || 0) >= 0.995
-
-  const cancelSnap = () => {
-    if (snapRaf) cancelAnimationFrame(snapRaf)
-    snapRaf = 0
-    snapping = false
-  }
-
-  const animateTo = (to) => {
-    const from = scrollY
-    if (Math.abs(to - from) < 2) return
-    const t0 = performance.now()
-    snapping = true
-    const step = (now) => {
-      const k = Math.min((now - t0) / SNAP_MS, 1)
-      scrollTo(0, from + (to - from) * easeOut(k))
-      if (k < 1) snapRaf = requestAnimationFrame(step)
-      else { snapRaf = 0; snapping = false }
-    }
-    snapRaf = requestAnimationFrame(step)
-  }
-
-  const maybeSnap = () => {
-    if (snapping || !pinEl) return
+  const progress = () => ((window.__eviiveScroll || {}).p) || 0
+  const zone = () => {
     const r = pinEl.getBoundingClientRect()
-    if (r.top > 0 || r.bottom < innerHeight) return   // not ours yet
-    const st = states(), s1 = st[0], s2 = st[1]
-    const y = scrollY
-    if (y < s1 - innerHeight * 0.5) return            // still approaching
-    if (y > s2) {
-      if (!settled()) return animateTo(s2)            // hold until it lands
-      if (y > s2 + innerHeight * 0.35) return         // then let them go
+    if (r.top <= 0 && r.bottom >= innerHeight) return "inside"
+    if (r.top > 0 && r.top < innerHeight) return "approach"
+    if (r.bottom < innerHeight && r.bottom > 0) return "leaving"
+    return "away"
+  }
+
+  const unlock = () => { locked = false; clearTimeout(guardT) }
+
+  const glideTo = (y, targetP) => {
+    const from = scrollY
+    const t0 = performance.now()
+    locked = true
+    clearTimeout(guardT)
+    guardT = setTimeout(unlock, GUARD_MS)          // never trap the reader
+    if (raf) cancelAnimationFrame(raf)
+    const step = (now) => {
+      const k = Math.min((now - t0) / STEP_MS, 1)
+      scrollTo(0, from + (y - from) * easeOut(k))
+      if (k < 1) { raf = requestAnimationFrame(step); return }
+      raf = 0
+      // hold the lock until the scene itself has finished arriving
+      const settle = () => {
+        if (Math.abs(progress() - targetP) < 0.005) return unlock()
+        raf = requestAnimationFrame(settle)
+      }
+      settle()
     }
-    animateTo(Math.abs(y - s1) < Math.abs(y - s2) ? s1 : s2)
+    raf = requestAnimationFrame(step)
   }
 
-  const onScroll = () => {
-    if (snapping) return
-    clearTimeout(idle)
-    idle = setTimeout(maybeSnap, IDLE_MS)
+  const goto = (i) => {
+    idx = i
+    glideTo(states()[i], i === 0 ? 0.5 : 1)
   }
-  // deliberate input abandons a snap in progress - never fight the reader
-  const onIntent = () => { if (snapping) cancelSnap() }
 
-  addEventListener("scroll", onScroll, { passive: true })
-  addEventListener("wheel", onIntent, { passive: true })
-  addEventListener("touchstart", onIntent, { passive: true })
-  addEventListener("keydown", onIntent)
+  const cool = () => {
+    cooling = true
+    clearTimeout(coolT)
+    coolT = setTimeout(() => { cooling = false }, COOL_MS)
+  }
+
+  /** @returns true if the gesture was consumed */
+  const onStep = (dir) => {
+    const z = zone()
+    if (z === "away") { idx = null; return false }
+
+    if (locked) { cool(); return true }          // nothing gets through
+    if (cooling) { cool(); return true }         // still the same gesture
+
+    if (z === "approach") {
+      if (dir > 0) { cool(); goto(0); return true }
+      return false                                  // going up, let them leave
+    }
+    if (z === "leaving") {
+      if (dir < 0) { cool(); goto(1); return true }   // re-enter from below
+      return false
+    }
+    // inside
+    if (idx === null) idx = progress() >= 0.75 ? 1 : 0
+    if (dir > 0) {
+      if (idx === 0) { cool(); goto(1); return true }
+      return false                                  // done — scroll on normally
+    }
+    if (idx === 1) { cool(); goto(0); return true }
+    return false                                    // at the first state, go up
+  }
+
+  const onWheel = (e) => {
+    if (Math.abs(e.deltaY) < 1) return
+    if (onStep(e.deltaY > 0 ? 1 : -1)) e.preventDefault()
+  }
+  const onTouchStart = (e) => { touchY = e.touches[0].clientY }
+  const onTouchMove = (e) => {
+    const dy = touchY - e.touches[0].clientY
+    if (Math.abs(dy) < 6) return
+    if (onStep(dy > 0 ? 1 : -1)) e.preventDefault()
+  }
+  const KEYS = { ArrowDown: 1, PageDown: 1, " ": 1, ArrowUp: -1, PageUp: -1 }
+  const onKey = (e) => {
+    const d = KEYS[e.key]
+    if (d && onStep(d)) e.preventDefault()
+  }
+
+  addEventListener("wheel", onWheel, { passive: false })
+  addEventListener("touchstart", onTouchStart, { passive: true })
+  addEventListener("touchmove", onTouchMove, { passive: false })
+  addEventListener("keydown", onKey)
 
   let blobUrl = ""
   try {
@@ -162,12 +209,13 @@ export default function mount(host) {
     if (window.__eviiveStop) window.__eviiveStop()
     ro.disconnect()
     removeEventListener("resize", syncVP)
-    cancelSnap()
-    clearTimeout(idle)
-    removeEventListener("scroll", onScroll)
-    removeEventListener("wheel", onIntent)
-    removeEventListener("touchstart", onIntent)
-    removeEventListener("keydown", onIntent)
+    if (raf) cancelAnimationFrame(raf)
+    clearTimeout(coolT)
+    clearTimeout(guardT)
+    removeEventListener("wheel", onWheel)
+    removeEventListener("touchstart", onTouchStart)
+    removeEventListener("touchmove", onTouchMove)
+    removeEventListener("keydown", onKey)
     document.documentElement.classList.remove("eviive-snap")
     clearInterval(navTimer)
     style.remove(); driverEl.remove()
