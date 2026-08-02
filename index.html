@@ -727,6 +727,18 @@ aligned patients</span>
   }
 
   function setRail(months){
+    /* RE-MEASURE, every frame. railGeom is captured in alignUnit in VIEWPORT
+       coordinates, and alignUnit runs on load — when this section is still far
+       down the page. Once the sticky pins, the rail's real viewport top is
+       navH + 96, but the cached value was still its unpinned position several
+       hundred pixels lower. headY came out negative, the span clamped to 1px,
+       and all eighty ticks collapsed into a 40px smear. In the prototype the
+       pin started at the document top so the cached value happened to be right
+       from the first frame; here it never is. One rect read, before any writes. */
+    const rg = railEl.getBoundingClientRect()
+    railGeom.top = rg.top;   railGeom.h = rg.height
+    railGeom.left = rg.left; railGeom.w = rg.width
+
     // length along the rail's own axis, and where the head sits on it
     const H = HZ() ? railGeom.w : railGeom.h
     /* ORIENTATION (the comments used to describe the pre-flip layout):
@@ -739,8 +751,14 @@ aligned patients</span>
     /* The orb sits at (0,0,z) on a camera looking straight down -Z, so it
        projects to EXACTLY innerHeight/2. Anything else and the leader line
        leaves the rail above the dot it is supposed to be pointing at. */
+    /* The head must land on the orb's centre line. That used to be exactly
+       innerHeight/2, but with a fixed nav overhead the orb sits on the centre
+       of the STAGE (viewport minus nav), which alignUnit publishes as
+       scroll.orbY. Reading it here keeps the mark, the orb and the rail's
+       midpoint on one line — the condition for the rail being flush at both
+       ends, since it makes headY / H exactly 0.5. */
     const headY = HZ() ? (innerWidth * 0.5 - railGeom.left)
-                       : (innerHeight * 0.5 - railGeom.top)
+                       : ((scroll.orbY || 0.5) * innerHeight - railGeom.top)
     /* Scale off the distance from the TOP to the head, not from the head to
        the foot. That is what puts month zero exactly on y = 0:
            m = 0  ->  headY - months * (headY / months)  =  0
