@@ -111,7 +111,10 @@ confirming them.** Three traps, all real, all hit repeatedly:
    one version, every time. A file that failed to compile reports the errors of
    the file before it, so a broken upload looks clean. Never trust it.
 
-2. **The only reliable check is downloading the built artefact and grepping it:**
+2. **`readCodeFile` is the authority for Framer file contents.** The
+   *unversioned* `framer.com/m/<name>.js` URL is pinned to an old snapshot and
+   will misreport current state — it wrongly convinced me twice that Framer was
+   stale. For the hosted bundle, download and grep it:
    ```bash
    curl -sL "https://oceanncheung.github.io/eviive-scroll-section/dist/eviive-section.js" \
      | grep -c "<something you just added>"
@@ -140,25 +143,41 @@ guess.
 - The **approach** scrubs progress 0→0.5, finishing 75% of the way in, so the
   odometer counts up and the orb settles as the section rises into view
 - One deliberate scroll → 53.5 months, on a 2.6s weighted tween
-- Scroll-snap engages **only** while the section covers the viewport; entering and
-  leaving are ordinary scrolling
+- **No CSS scroll-snap at all.** It offers no control over duration or easing, so
+  the module runs a discrete controller: one gesture from the previous section
+  lands on 6.4 months, one more goes to EVIIVE, and every input is swallowed
+  until that transition finishes. `CATCH_AT` 0.5 (how far the section must arrive
+  before it captures), `STEP_MS` 560, `COOL_MS` 160, easing `(0.4, 0, 0.2, 1)`.
+  A 6s watchdog releases the lock if anything fails
 - Background full-bleed behind the nav; headline and rail inset by `--nav-h`
 - Orb centred; layout driven by measured element width, not the window
 - Nav fades out over the dark state, returns white on the light one
 
 ## Open
 
-1. **Nav variant.** Ocean is doing this himself. The site has a
-   `DesktopTransparent` variant switched by a 1px "NavTrigger" layer in the Hero;
-   that binding is a Framer *interaction*, which MCP cannot read or create. The
-   current fade is a workaround — set `FADE_NAV = false` in `EviiveSection.tsx`
-   once his version lands.
+1. **Nav — DONE, and owned elsewhere. Do not touch it.** Ocean built it: the
+   homepage carries two fixed headers, `NavSiteNav` and
+   `CustomSectionLightPhaseNavigation`, and `EviiveNavOverrides.tsx` crossfades
+   between them. `EviiveSection.tsx` only *reports* state — it publishes
+   `{active, theme, progress}` on `window.__eviiveNavTheme` and an
+   `eviive-nav-theme` event, on transitions only, and touches no nav element.
+   An earlier version also grabbed "the tallest fixed header" and set opacity on
+   it; with two headers that could hide the light-phase nav at the very moment
+   the override was revealing it. Removed. There was also a `FADE_NAV` flag that
+   gated the publish loop as well as the fade, so turning it off silently killed
+   the overrides' event stream. Also removed.
 
-2. **SUSPECTED: dead 100vh tail.** The Framer section frame `nFifHam5M` is
-   `height="300vh"`, but `.pin` is now `calc(var(--vh) * 2)` after the drop to two
-   states. That likely leaves ~100vh of empty dark section below the pin.
-   **Unverified — the Framer plugin was disconnected when this was written.**
-   Check `nFifHam5M`; if still 300vh, set it to 200vh.
+2. **RESOLVED — and do NOT "fix" it again.** Frame `nFifHam5M` is 300vh and
+   `.pin` is `calc(var(--vh) * 3)`. They match, deliberately. Two states need
+   three viewports: travel is `pinH - vh` = 200vh, the states sit 100vh apart,
+   and the remaining **100vh is dwell** — the stretch where the section stays
+   pinned after the final state. That dwell is what lets the closing transition
+   finish; without it the last snap point coincides with the last pinned pixel
+   and any momentum unpins the section mid-animation. A reviewer reading this
+   file at an earlier revision reported the frame/pin as mismatched; it is not.
+   **Rule: the Framer frame height must always equal `.pin`.** Both wrong ways
+   were hit in one day — frame shorter overflows into Metrics, frame longer
+   leaves a dead dark band.
 
 3. **Orb reads softer than `golden/eviive-section-v1.2-responsive.html`.** Raised
    twice, never confirmed either way by Ocean. Compare against the golden before
