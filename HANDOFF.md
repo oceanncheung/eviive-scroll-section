@@ -74,7 +74,7 @@ three.js cannot be installed there. The route around it:
 |---|---|
 | home page | `YKZNl8v67` |
 | Desktop breakpoint | `xMTVnhBwP` |
-| section frame | `nFifHam5M` |
+| section frame | `nFifHam5M` — **100vh** |
 | component instance | `DBnNXhgh4` |
 
 ## The loop
@@ -173,6 +173,15 @@ guess.
   they simply see it; too high and a hard throw sails by and the section never
   happens. Both failures were observed.
 
+  **The odometer blur is duration-dependent.** It measures per-frame wheel
+  displacement, so it scales inversely with the scene tween's length: golden was
+  tuned at 2600ms, and simply shortening the tween tripled the blur and pinned
+  it against its 9px ceiling — a smear that only resolves at the end, which is
+  what reads as the number stuttering before it settles. Speed is now normalised
+  by `dt` and by `durFor(target)/2600`, and the constant was calibrated by
+  measuring against golden (leg 1 must peak under 9 and clamp zero frames).
+  **Re-measure against `golden/` after any change to duration or type scale.**
+
   **A consumed gesture owns its tail** (`ours`). A flick's momentum outlasts the
   transition, and those leftovers used to reach the browser the instant `busy`
   cleared and scroll the page back out of the section — which read both as the
@@ -209,13 +218,21 @@ guess.
    gated the publish loop as well as the fade, so turning it off silently killed
    the overrides' event stream. Also removed.
 
-2. **Frame height: 200vh, and it must equal `.pin`.** Two states, travel
-   `pinH - vh` = 100vh, state 2 at the last pinned pixel. There is deliberately
-   NO dwell: the controller's exit gate holds the reader at EVIIVE until the
-   transition lands, so a spare viewport of pinned scrolling would only mean the
-   section sitting still while the page moved. Both mismatches were hit in one
-   day — frame shorter than `.pin` overflows into Metrics, frame longer leaves a
-   dead dark band.
+2. **Frame height: 100vh, and the section has NO pinned travel.** Both states
+   live at one scroll position; a flick changes the scene and nothing else. It
+   was 200vh, with sticky holding the composition still while the page moved a
+   viewport underneath — which drifts, because a sticky element and a scripted
+   `scrollTo` do not round to the same pixel on the same frame. Ocean's rule:
+   *"scroll up from eviive to scene 1 and scroll down from scene 1 to eviive
+   should only activate one thing: the scene change. the view should never
+   change."* Measured view movement is now 0px in both directions.
+
+   Removing the travel also removed the slack that hid two bugs, so do not
+   reintroduce it casually: sub-tolerance wheel events used to leak to the page,
+   and eight pixels was enough to flip the section from `inside` to `leaving`,
+   after which every downward flick read as a request to exit. Nothing reaches
+   the page now while `engaged` is set, and a release stays final (`spent`)
+   until the section has genuinely left the viewport.
 
 3. **Orb reads softer than `golden/eviive-section-v1.2-responsive.html`.** Raised
    twice, never confirmed either way by Ocean. Compare against the golden before
