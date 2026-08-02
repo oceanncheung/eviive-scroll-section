@@ -116,50 +116,34 @@ export default function mount(host) {
      it was thrown, which is the definition of unpredictable. */
   const ARM_IN = 0.25
 
-  /* Duration scales with distance. These are deliberately LONG. The 100-500ms
-     band belongs to UI feedback - a button, a toggle, something acknowledging a
-     click. This is not that: it is the page itself travelling most of a screen,
-     and at 450ms that reads as a lurch no curve can rescue. Arriving at a
-     destination wants to be seen happening. */
-  const GLIDE_MIN = 820, GLIDE_MAX = 1150
-  const GUARD_MS  = 6000
+  /* OPTION B - CONTINUE THE HAND.
+     The entry is a critically damped spring whose initial velocity is the
+     reader's own scroll speed at the moment of capture. There is no seam where
+     "you scrolling" becomes "it moving": the page keeps travelling at exactly
+     the speed the hand left it, and that motion decays into a long, perfectly
+     soft landing. Response is instant by construction - it cannot read as
+     stiff, because for the first frames it IS the reader's motion.
 
-  /* A real cubic-bezier, solved by Newton-Raphson exactly the way the browser
-     solves one, so the curve can be written the way it is read.
+         x(t) = y + (d0 + (v0 + w*d0) * t) * e^(-w*t)
 
-     easeOutQuint was wrong here and wrong in a way that is easy to miss: it is
-     76% done in the first quarter of its duration. Over a short glide that
-     means a lurch followed by a long crawl nobody can see - which is precisely
-     what "stiff, no easing" describes. The complaint was never that the curve
-     was too soft; it was that all the travel happened at once.
+     Closed form, evaluated per frame from the clock - no integration drift.
+     Critically damped is the only tuning with no overshoot, PROVIDED the
+     initial speed toward the target stays below w*|d0|; past that even a
+     critically damped spring crosses the line once. The clamp below enforces
+     it, so a hard throw becomes the fastest approach that still lands soft.
 
-     (0.30, 0, 0.15, 1) picks up immediately but gently, spends the middle of
-     its time actually moving, and lands long. Roughly: 9% at a tenth of the
-     way, 28% at a fifth, 75% at half, 97% at four fifths.
+     OMEGA is the whole feel: settle time ~ 6/OMEGA. 5/s lands visually in
+     ~1.1-1.3s - the "intentionally slow, smooth, elegant" band. Raising it
+     tightens the arrival, lowering it adds ceremony.
 
-     An earlier version seeded a spring with the gesture's own velocity. Springs
-     belong to motion a finger is still tracking; for a discrete step they only
-     make the identical flick feel different every time, and a spring never
-     actually arrives, so anything waiting on arrival waits forever. */
-  const bezier = (x1, y1, x2, y2) => {
-    const A = (a, b) => 1 - 3 * b + 3 * a
-    const B = (a, b) => 3 * b - 6 * a
-    const C = (a) => 3 * a
-    const at = (t, a, b) => ((A(a, b) * t + B(a, b)) * t + C(a)) * t
-    const slope = (t, a, b) => 3 * A(a, b) * t * t + 2 * B(a, b) * t + C(a)
-    return (x) => {
-      if (x <= 0) return 0
-      if (x >= 1) return 1
-      let t = x
-      for (let i = 0; i < 6; i++) {
-        const d = slope(t, x1, x2)
-        if (Math.abs(d) < 1e-6) break
-        t -= (at(t, x1, x2) - x) / d
-      }
-      return at(t, y1, y2)
-    }
-  }
-  const ease = bezier(0.30, 0.00, 0.15, 1.00)
+     The two lessons already paid for stay enforced here: a spring never
+     arrives on its own, so there is an explicit landing condition and a hard
+     final write; and positions are rounded to integer pixels, because a
+     fractional scroll position resamples the sticky element every frame and
+     shimmers. */
+  const OMEGA    = 5            // 1/s - spring stiffness, sets the settle time
+  const GUARD_MS = 6000
+
 
   let idx = null                // 0 = 6.4 months, 1 = EVIIVE, null = not engaged
   let busy = false              // a step is in flight, page AND scene
@@ -225,18 +209,38 @@ export default function mount(host) {
 
   const glide = (y, then) => {
     const from = scrollY
-    const dist = y - from
-    if (Math.abs(dist) < 2) { scrollTo(0, y); then(); return }
-    const ms = Math.min(GLIDE_MAX,
-                Math.max(GLIDE_MIN, GLIDE_MIN + (Math.abs(dist) / innerHeight) * 380))
+    const d0 = from - y
+    if (Math.abs(d0) < 2) { scrollTo(0, y); then(); return }
+    /* The hand-off. vel is the reader's live scroll speed (px/s, sampled below,
+       stale samples aged out). Clamped so the speed TOWARD the target never
+       exceeds w*|d0| - the no-overshoot bound - and away-from-target noise is
+       bounded symmetrically. With v0 = 0 (keyboard, standstill) this collapses
+       to the from-rest spring, which eases in and out on its own. */
+    /* vel and d share one coordinate (scrollY), so no sign juggling: entering
+       from above d0 < 0 and vel > 0, from below d0 > 0 and vel < 0 - in both
+       cases raw vel already points at the target.
+
+       A hand faster than the no-overshoot bound must not be CLAMPED - chopping
+       thousands of px/s in one frame is a brake-slam, measured at 17,800 px/s
+       of discontinuity, which is the very seam this spring exists to remove.
+       Instead the spring STIFFENS to meet the hand: w = v0/|d0| sits exactly on
+       the bound, so the throw is absorbed, the landing stays exponential, and a
+       harder flick simply arrives sooner - which is what thrown things do.
+       The exponential is self-limiting - it can never travel further than the
+       remaining distance, whatever the stiffness - so a high w is a hard catch,
+       not a teleport. The cap only bounds the settle to >=100ms against a
+       corrupt sample; real trackpads stay well inside it. */
+    const toward = d0 < 0 ? Math.max(0, vel) : Math.min(0, vel)
+    const w = Math.min(60, Math.max(OMEGA, Math.abs(toward) / Math.abs(d0)))
+    const lim = w * Math.abs(d0)
+    const v0 = Math.max(-lim, Math.min(vel, lim))
     const t0 = performance.now()
     if (raf) cancelAnimationFrame(raf)
     const step = (now) => {
-      const k = (now - t0) / ms
-      if (k < 1) {
-        /* Integer pixels. A fractional scroll position resamples the sticky
-           element every frame, and that shimmer is what reads as jitter. */
-        scrollTo(0, Math.round(from + dist * ease(k)))
+      const t = (now - t0) / 1000
+      const dd = (d0 + (v0 + w * d0) * t) * Math.exp(-w * t)
+      if (Math.abs(dd) >= 0.5 && t < 2.5) {
+        scrollTo(0, Math.round(y + dd))
         raf = requestAnimationFrame(step)
         return
       }
@@ -401,7 +405,29 @@ export default function mount(host) {
 
   /* Re-arm the reveal once the section is completely gone below the fold, so
      coming back to it plays rather than showing a finished composition. */
+  /* Live scroll velocity, px/s, for the spring's hand-off. An EMA over the
+     last few scroll events; a sample older than 120ms is treated as rest, so a
+     reader who stopped three seconds ago does not inherit a phantom speed from
+     their previous gesture. */
+  let vel = 0, vLastY = scrollY, vLastT = performance.now()
+  const sampleVel = () => {
+    const now = performance.now()
+    const dt = now - vLastT
+    if (dt <= 0) return
+    const inst = (scrollY - vLastY) / dt * 1000
+    /* Attack fast, release smooth - the same asymmetry the odometer needed. A
+       symmetric average lags a rising speed by several frames, so the spring
+       inherited 60% of the hand and the missing 40% appeared as a velocity step
+       at the hand-off. */
+    vel = dt > 120 ? 0
+        : Math.abs(inst) > Math.abs(vel) ? vel * 0.25 + inst * 0.75
+        : vel * 0.6 + inst * 0.4
+    vLastY = scrollY
+    vLastT = now
+  }
+
   const onScroll = () => {
+    sampleVel()
     if (busy) return
     const r = pinEl.getBoundingClientRect()
     const below = r.top >= innerHeight        // still coming: reader is above it

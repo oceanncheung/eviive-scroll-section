@@ -171,9 +171,18 @@ guess.
   the module runs a discrete controller. The sequence: the section rises under
   ordinary scrolling with the scene held at `p = 0`; one flick glides it to fill
   the viewport and *then* plays the 6.4 reveal; one more flick goes to EVIIVE.
-  `ARM_IN` 0.25, `RESCUE_IN` 0.75, `GESTURE_GAP` 140ms, `TOLERANCE` 24, glide
-  340–560ms scaled by distance, easing `1 - (1-t)^5`, scene 900ms in / 1300ms to
-  EVIIVE. One gate only, on the way out. A 6s watchdog releases if anything fails.
+  `ARM_IN` 0.25, `RESCUE_IN` 0.75, `GESTURE_GAP` 140ms, `TOLERANCE` 24. One
+  gate only, on the way out. A 6s watchdog releases if anything fails.
+
+  **The entry glide is a critically damped spring seeded with the reader's own
+  scroll velocity** (Ocean's pick from five options: "continue the hand").
+  Closed form `x(t) = y + (d0 + (v0 + w·d0)t)e^(-wt)`, `OMEGA` 5/s (~1.2s
+  settle), stiffness adapting up to `w = v0/|d0|` (cap 60) so a fast hand is
+  absorbed by a stiffer catch instead of clamped - a clamp is a brake-slam,
+  measured at 17,800px/s of discontinuity. Hand-off discontinuity is now 0.
+  Velocity sampling attacks fast / releases smooth (symmetric EMAs lag a rising
+  speed), ages out after 120ms of quiet, and the spring hard-lands at 0.5px
+  because springs never arrive on their own. Integer pixels throughout.
 
   **Two capture triggers, and they are not the same.** `ARM_IN` is where a
   *deliberate* flick takes hold — one begun with the section already in view.
