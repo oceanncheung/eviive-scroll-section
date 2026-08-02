@@ -655,12 +655,35 @@ export default function mount(host) {
      tween is re-issued. Worst case a dropped scene now costs ~0.6s of blank
      instead of forever. */
   const heal = { p: -1, still: 0 }
+  const adopt = { ticks: 0 }
   const healT = setInterval(() => {
     /* The hint's conditions can BECOME true with no scroll event to notice -
        the abandon-rewind finishes after the reader has stopped moving, and an
        event-driven check alone left the arrow hidden at a freshly re-armed
        stop. This tick is the time-driven half of that check. */
     updateHint()
+    /* THE ADOPTION INVARIANT. The reload-in-place adoption was a one-shot at
+       120ms whose first line gave up silently when the driver was not ready -
+       and a cold load (three.js from esm.sh) routinely takes longer, which is
+       how Ocean kept meeting a dark board after hard-reloading Preview inside
+       the section: unengaged, p = 0, and the tween healer inert because its
+       first condition is `engaged`. The rule, as an invariant: a reader
+       standing INSIDE an unvisited, unengaged, quiet section for ~600ms means
+       the section must be alive - adopt it. engage() tolerates a missing
+       driver (its to() is a no-op then), and the tween healer re-issues every
+       600ms once engaged, so adoption + healer together survive any driver
+       arrival time. */
+    if (!busy && !engaged && !spent) {
+      const r = pinEl.getBoundingClientRect()
+      if (r.top <= 2 && r.bottom >= innerHeight - 2) {
+        adopt.ticks += 1
+        if (adopt.ticks >= 3) {
+          adopt.ticks = 0
+          console.warn("[eviive] adopted an unengaged section")
+          engage(progress() >= 0.75 ? 1 : 0)
+        }
+      } else adopt.ticks = 0
+    } else adopt.ticks = 0
     if (engaged && progress() >= 0.99) sawFull = true
     if (!engaged || busy) { heal.p = progress(); heal.still = 0; return }
     if (Math.abs(pinEl.getBoundingClientRect().top) > 2) { heal.still = 0; return }

@@ -134,8 +134,15 @@ confirming them.** Three traps, all real, all hit repeatedly:
    a.to(goal), logged as "[eviive] healed a dropped scene tween". This heals
    api-not-ready races, double-mount drops, anything. Verified by inducing the
    exact blank state (engaged, docked, p forced to 0): healer fired and the
-   tween recovered. NOTE for harness work: a hidden Browser pane runs no rAF -
-   tweens freeze and tests lie. Keep the pane visible or distrust the numbers.
+   tween recovered. The healer's blind spot - standing INSIDE while UNENGAGED
+   (reload-in-place with the driver still loading; the old 120ms init one-shot
+   gave up silently when the api was not ready) - is covered by the ADOPTION
+   INVARIANT on the same tick: unvisited + unengaged + fully inside + quiet for
+   ~600ms -> engage, logged "[eviive] adopted an unengaged section". Adoption
+   tolerates a missing driver; the healer then re-issues until it arrives, so
+   the pair survives any driver arrival time. NOTE for harness work: a hidden
+   Browser pane runs no rAF - tweens freeze and tests lie. Keep the pane
+   visible or distrust the numbers.
 
 4. **A throw in the wheel handler looks like nothing at all.** If `onWheel`
    raises before `preventDefault()`, the event simply passes through and the
