@@ -187,6 +187,13 @@ guess.
   Velocity sampling attacks fast / releases smooth (symmetric EMAs lag a rising
   speed), ages out after 120ms of quiet, and the spring hard-lands at 0.5px
   because springs never arrive on their own. Integer pixels throughout.
+  **The launch is floored at 60% of the no-overshoot bound**: capture fires on a
+  gesture's first event, so raw sampling inherits the flick's slow beginning -
+  seeded that low the spring is neither snappy nor legibly easing out. Floored,
+  a gentle flick answers briskly (35% of travel in 150ms, 62% by 300ms) and
+  spends the last fifth arriving over ~900ms. Fast hands exceed the floor and
+  are untouched; the overshoot catch skips it (away-pointing samples) so its
+  settle-back stays gentle.
 
   **The overshoot catch is HISTORY, not geometry.** With one viewport and no
   pinned travel, "inside" is a single scroll position and the rescue band is a

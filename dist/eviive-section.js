@@ -225,7 +225,26 @@ export default function mount(host) {
     const toward = d0 < 0 ? Math.max(0, vel) : Math.min(0, vel)
     const w = Math.min(60, Math.max(OMEGA, Math.abs(toward) / Math.abs(d0)))
     const lim = w * Math.abs(d0)
-    const v0 = Math.max(-lim, Math.min(vel, lim))
+    let v0 = Math.max(-lim, Math.min(vel, lim))
+    /* THE SNAP FLOOR. Capture fires on a gesture's FIRST event, so the sampled
+       speed is the flick's slow beginning - its peak comes several events
+       later, and by then those are swallowed as the tail. Seeded that low, the
+       spring neither launches (not snappy) nor visibly decays (no legible
+       ease-out); it just glides murkily. The launch is therefore floored at
+       60% of the no-overshoot bound: a gentle flick answers BRISKLY and then
+       rides the exponential down into position - about 90% of the travel in
+       the first half second and the last tenth spent arriving softly, which is
+       "snappy, then slowly easing into place" as a shape. A fast hand already
+       exceeds the floor and is untouched, so continuity for real throws stays.
+       A speed-up at the hand-off reads as the page ANSWERING; only slow-downs
+       read as a brake. The floor is skipped when the sampled motion points
+       AWAY from home - the overshoot catch wants its gentle settle-back, not a
+       snap-back. */
+    const away = toward === 0 && Math.abs(vel) > 50
+    if (!away) {
+      const floor = 0.6 * lim
+      if (Math.abs(v0) < floor) v0 = (d0 < 0 ? 1 : -1) * floor
+    }
     const t0 = performance.now()
     if (raf) cancelAnimationFrame(raf)
     const step = (now) => {
