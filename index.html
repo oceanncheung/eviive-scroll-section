@@ -1249,6 +1249,15 @@ nearly 4 years longer</span>
   readScroll();
 
   function frame(now){
+    /* SCHEDULE FIRST, WORK SECOND. This loop is the section's heartbeat -
+       every reveal, the odometer, the caption and the scene's p hang off it.
+       It used to schedule the next frame as its LAST line, so one uncaught
+       throw anywhere in the body ended the chain SILENTLY: p froze where it
+       stood, and frozen near 0 that is a dark board with no content and no
+       error anywhere. Now a throw costs one frame, reports once, and the loop
+       lives on. */
+    requestAnimationFrame(frame);
+    try{
     scroll.p = reduced ? target : from + (target-from)*EASE(clamp((now-t0)/DUR,0,1));
     const p = scroll.p;
 
@@ -1294,7 +1303,7 @@ nearly 4 years longer</span>
     if (hud.classList.contains("on")){
       hud.textContent = `p       ${p.toFixed(3)}\ncamZ    ${(-47.1*p).toFixed(2)}\nmonths  ${lerp(PFS_A,PFS_B,p).toFixed(1)}`;
     }
-    requestAnimationFrame(frame);
+    }catch(err){ if(!window.__eviiveErr){ window.__eviiveErr = err.stack||String(err); console.error("[eviive] frame:", err); } }
   }
   requestAnimationFrame(frame);
 

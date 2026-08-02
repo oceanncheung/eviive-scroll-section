@@ -125,7 +125,19 @@ confirming them.** Three traps, all real, all hit repeatedly:
      | grep -o 'https://framerusercontent.com/modules/[^"]*' | head -1 | xargs curl -sL
    ```
 
-3. **A throw in the wheel handler looks like nothing at all.** If `onWheel`
+3. **The blank-section class of bug: a dead loop or a dropped tween.** Two
+   guards exist and BOTH matter. The driver's frame() schedules the next frame
+   FIRST and wraps its whole body - it used to schedule last, so one uncaught
+   throw ended the heartbeat silently and p froze wherever it stood (frozen
+   near 0 = dark board, no content, no error). And the controller runs a TWEEN
+   INVARIANT: engaged + docked + p stalled off-goal for 400ms -> re-issue
+   a.to(goal), logged as "[eviive] healed a dropped scene tween". This heals
+   api-not-ready races, double-mount drops, anything. Verified by inducing the
+   exact blank state (engaged, docked, p forced to 0): healer fired and the
+   tween recovered. NOTE for harness work: a hidden Browser pane runs no rAF -
+   tweens freeze and tests lie. Keep the pane visible or distrust the numbers.
+
+4. **A throw in the wheel handler looks like nothing at all.** If `onWheel`
    raises before `preventDefault()`, the event simply passes through and the
    section reads as unresponsive — no red console text unless you go looking.
    Two undefined identifiers hid there for hours this way. The handler now
@@ -135,7 +147,7 @@ confirming them.** Three traps, all real, all hit repeatedly:
    its target because `EASE` is explicitly clamped at `t >= 1`. Remove that clamp
    and the exit gate never opens.
 
-4. **`gen.py` contains string patches against MINIFIED output.** When the source
+5. **`gen.py` contains string patches against MINIFIED output.** When the source
    changes shape the pattern stops matching and `gen.py` aborts, leaving the old
    `dist` in place. Each is guarded by `sys.exit`, so **run `gen.py` bare and read
    all of its output.** Do not pipe it through a grep filter — that is exactly how
