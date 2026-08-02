@@ -49,7 +49,7 @@ body{margin:0;background:var(--dark);font-family:"Inter",system-ui,sans-serif;
 
 .headline{position:absolute;left:var(--gutter);top:var(--pad-t);margin:0;
   font-size:var(--f-h2);line-height:1.18;letter-spacing:-.03em;font-weight:400;
-  color:var(--ink);max-width:24ch}
+  color:var(--ink);max-width:17ch}
 /* Nothing is pre-printed in grey. Every line arrives the way Framer reveals
    text: word by word, rising a little and resolving out of blur. */
 .headline .ln{display:block;white-space:pre-wrap}
@@ -707,23 +707,25 @@ aligned patients</span>
     const natR = fpxV / 6.4                     // radius at rest, natural size
     const cxV  = innerWidth / 2
     /* The headline sits at the TOP of the frame; the orb is vertically centred.
-       Testing their horizontal extents alone reports a collision that cannot
-       happen - and on a wide viewport the gutter pushes the headline far right,
-       so it fired constantly. When it fires, orbX, orbDia AND the label's leader
-       length are all recomputed from a gap that is not real: the orb drifts
-       right, changes size, and the label slides toward the rail. Require an
-       actual vertical overlap before believing the horizontal one. */
-    const orbTopV  = innerHeight / 2 - natR
-    const clearsHl = (cxV - natR) >= (hl.right - 4) || hl.bottom <= orbTopV
-    const fits = clearsHl && (cxV + natR) <= (railX - labelW)
+       STAY CENTRED; SHRINK IF YOU MUST. The old rule was a boolean: the orb
+       either sat dead centre at full size, or jumped sideways into the gap and
+       resized. At the reference 1512x900 the golden passes that test by exactly
+       ZERO pixels (552 >= 552), so anything that nudges it — a taller viewport,
+       a fixed nav, a different font's ch metric — flips it, and the orb lurches
+       right and changes size for a few pixels of overlap. Same thresholds as the
+       golden, same result at the reference viewport, but the failure mode is now
+       continuous: the body gives up a little radius instead of leaving the
+       middle of the screen. Screen-centred is the composition; size is the
+       variable that yields. */
+    const roomL = cxV - (hl.right - 4)          // to the headline, golden's 4px tolerance
+    const roomR = (railX - labelW) - cxV        // to the rail's leader label
+    const half  = Math.min(roomL, roomR)
+    const maxDown = (readoutEl.getBoundingClientRect().top - hl.bottom) * 0.92
 
-    if (fits){
-      scroll.orbX = 0.5; scroll.orbDia = 0      // 0 => leave the natural size alone
-    } else {
-      const maxDown = (readoutEl.getBoundingClientRect().top - hl.bottom) * 0.92
-      scroll.orbX   = ((gapL + gapR) / 2) / innerWidth
-      scroll.orbDia = Math.max(Math.min(gapR - gapL, maxDown), 80)
-    }
+    scroll.orbX = 0.5
+    scroll.orbDia = half >= natR
+      ? 0                                        // 0 => leave the natural size alone
+      : Math.max(Math.min(half * 2, maxDown), 80)
   }
 
   function setRail(months){
