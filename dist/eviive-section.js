@@ -425,8 +425,13 @@ export default function mount(host) {
     const a = api()
     if (!a || !a.seek) return
     if (zone() === "inside") {
-      idx = -pinEl.getBoundingClientRect().top > innerHeight / 2 ? 1 : 0
-      a.seek(idx === 1 ? 1 : 0.5)
+      /* Loaded mid-section (Preview reloads in place). Adopt the section fully:
+         without `engaged` the first flick was consumed by a do-nothing re-entry
+         step before anything visible happened. With one scroll position there
+         is no "past half-way" to read - land on 6.4 and let the reader step. */
+      idx = 0
+      engaged = true
+      a.seek(0.5)
     } else a.seek(0)
   }, 120)
 
