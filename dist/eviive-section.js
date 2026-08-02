@@ -26,6 +26,10 @@ export default function mount(host) {
   host.style.setProperty("--vw", "100%")
   host.style.setProperty("--vh", "100vh")
   syncVP()
+  /* iPadOS/iOS Safari resizes the viewport as its toolbar collapses and
+     expands mid-scroll; window resize alone under-reports it on some
+     versions. visualViewport is the authoritative signal. */
+  if (window.visualViewport) visualViewport.addEventListener("resize", syncVP)
   const ro = new ResizeObserver(syncVP); ro.observe(host)
   addEventListener("resize", syncVP, { passive: true })
 
@@ -72,11 +76,13 @@ export default function mount(host) {
   setTimeout(() => clearInterval(navTimer), 6000)
 
   const HINT_CSS =
-    ".eviive-hint{position:absolute;left:50%;top:0;width:22px;height:22px;" +
-    "margin-left:-11px;margin-top:-11px;color:rgba(248,246,242,0.8);opacity:0;" +
-    "transition:opacity .45s ease;pointer-events:none;z-index:6}" +
-    ".eviive-hint.on{opacity:1}" +
-    ".eviive-hint svg{width:100%;height:100%;display:block;" +
+    ".eviive-hint{position:absolute;left:50%;top:0;width:44px;height:44px;" +
+    "margin-left:-22px;margin-top:-22px;color:rgba(248,246,242,0.8);opacity:0;" +
+    "transition:opacity .45s ease;pointer-events:none;z-index:6;" +
+    "display:flex;align-items:center;justify-content:center}" +
+    ".eviive-hint.on{opacity:1;pointer-events:auto;cursor:pointer}" +
+    ".eviive-hint.on:hover{color:rgba(248,246,242,1)}" +
+    ".eviive-hint svg{width:22px;height:22px;display:block;" +
     "animation:eviiveBob 2.6s ease-in-out infinite}" +
     "@keyframes eviiveBob{0%,100%{transform:translateY(-4px)}" +
     "50%{transform:translateY(4px)}}" +
@@ -169,6 +175,7 @@ export default function mount(host) {
   let busy = false              // a step is in flight, page AND scene
   let raf = 0, guardT = 0
   let lastInputAt = 0, armed = false, accum = 0, touchY = 0, touchAcc = 0
+  let tailPrev = 0, tailRises = 0   // fresh-intent detection inside a swallowed tail
   let ours = false              // this gesture was consumed by us - so is its tail
   /* The section owns the screen. Set on capture, cleared only when the reader
      has earned their way out either end. While it is set the page does not move
@@ -215,6 +222,14 @@ export default function mount(host) {
     '<path d="M205.66,149.66l-72,72a8,8,0,0,1-11.32,0l-72-72a8,8,0,0,1,' +
     '11.32-11.32L120,196.69V40a8,8,0,0,1,16,0V196.69l58.34-58.35a8,8,0,0,1,' +
     '11.32,11.32Z"/></svg>'
+  hint.setAttribute("role", "button")
+  hint.setAttribute("aria-label", "Continue to the next section")
+  /* The arrow is also a control: one more way in, for readers who point at
+     things rather than scroll at them. Same entrance, same conditions. */
+  hint.addEventListener("click", () => {
+    if (busy || engaged || spent) return
+    engage(0)
+  })
   host.appendChild(hint)
 
   const updateHint = () => {
@@ -376,7 +391,21 @@ export default function mount(host) {
        scenes the view must not move, so here it cannot move at all. */
     if (engaged) e.preventDefault()
     if (Math.abs(e.deltaY) < 1) return
-    if (quiet > GESTURE_GAP) { armed = true; ours = false; accum = 0 }
+    if (quiet > GESTURE_GAP) { armed = true; ours = false; accum = 0; tailRises = 0 }
+
+    /* FRESH INTENT INSIDE A TAIL. The quiet-gap rule alone made the reader wait
+       out the whole momentum tail (~1s) before a new flick counted - flick again
+       sooner and it was swallowed as "same gesture", which read as "I needed a
+       few scrolls to actually enter". The tell that separates them: a momentum
+       tail only ever DECAYS; a rising delta is a hand on the pad. Two
+       consecutive rises of >=28% re-arm immediately (two, so a single stray
+       spike in a tail - they happen - cannot fire it). */
+    if (!armed && ours) {
+      const mag = Math.abs(e.deltaY)
+      tailRises = mag > tailPrev * 1.28 + 2 ? tailRises + 1 : 0
+      tailPrev = mag
+      if (tailRises >= 2) { armed = true; ours = false; accum = 0; tailRises = 0 }
+    } else tailPrev = Math.abs(e.deltaY)
 
     /* THE STOP. On the way down, before the section has been visited, natural
        scrolling ends here the way a page ends. An event that would cross lands
@@ -499,12 +528,22 @@ export default function mount(host) {
     if (!busy && !engaged && !spent) {
       const rt = pinEl.getBoundingClientRect().top
       const edge = innerHeight * (1 - PEEK) - 2   // anything deeper than the stop
-      if (rt < edge && rt > innerHeight * 0.5) {
+      if (rt < edge) {
         clearTimeout(settleT)
         settleT = setTimeout(() => {
           if (busy || engaged || spent) return
-          const rr = pinEl.getBoundingClientRect().top
-          if (rr < edge && rr > innerHeight * 0.5) glide(stopY(), () => {})
+          const r = pinEl.getBoundingClientRect()
+          if (r.bottom <= 40 || r.top >= edge) return
+          /* iOS momentum delivers NO cancelable events once the finger lifts -
+             the stop cannot swallow it in flight, so a hard swipe can rest
+             anywhere. Resolve the rest position after 150ms of quiet: past
+             home entirely -> adopt the section; more than half entered ->
+             carry it forward (entrance + reveal); a shallow overshoot ->
+             settle back onto the stop. Desktop cannot reach the deep states
+             (wheel events are cancelable), so this changes nothing there. */
+          if (r.top <= 0) { engage(progress() >= 0.75 ? 1 : 0); return }
+          if (r.top <= innerHeight * 0.5) { engage(0); return }
+          glide(stopY(), () => {})
         }, 150)
       }
     }

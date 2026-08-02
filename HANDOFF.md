@@ -183,7 +183,22 @@ guess.
   phosphor-icons/ArrowDown@0.0.57), centred horizontally and centred in the
   visible band, colour "Text - Light Tone", 2.6s bob, reduced-motion aware.
   Visible only while the section is WAITING (peek showing, nothing in flight,
-  p ~ 0, not yet visited); any action dismisses it on the first frame. The next flick
+  p ~ 0, not yet visited); any action dismisses it on the first frame. It is
+  also a BUTTON (44px target, ARIA label): click performs the entrance.
+
+  **A rising delta inside a swallowed tail is a hand.** lastInputAt advances on
+  swallowed events by design, so a reader flicking again inside the arrival
+  tail EXTENDED the gesture that was eating them - locked out until total
+  quiet, which read as the page not responding. Two consecutive >=28% rises
+  re-arm instantly (two, because tails contain single stray spikes). Do not
+  "fix" responsiveness by shortening GESTURE_GAP - that reintroduces
+  one-flick-two-steps; the detector is the correct tool.
+
+  **iOS momentum is not cancelable after the finger lifts.** The stop cannot
+  swallow it in flight, so the settle guard resolves any unvisited rest
+  position after 150ms: shallow -> back to the stop, half-plus entered ->
+  carried forward (entrance + reveal), past home -> adopted. visualViewport
+  feeds syncVP for the collapsing Safari toolbar. The next flick
   performs a PRE-SET entrance: the section rises into the viewport over
   `ENTER_MS` 1800ms on a pronounced ease-out, cubic-bezier(0.25, 0.10, 0.10, 1)
   - Ocean's brief verbatim: "very very smooth and grounded... very calm and
