@@ -59,14 +59,14 @@ three.js cannot be installed there. The route around it:
 
 ### Framer code files
 
-- **`EviiveSection.tsx`** (id `LLlhJpB`) — the wrapper placed on the canvas.
-  Carries the `RenderTarget` canvas guard, a `--vw`/`--vh` fallback, a
-  `scroll-snap-type: proximity` override, and the nav fade.
-- **`EviiveScrollSection.tsx`** (id `WZ8vDZf`) — should be a ~25-line stub that
-  imports the hosted URL and calls `mount()`. **VERIFY THIS FIRST.** Ocean was
-  asked to paste that stub in. If it still holds ~39KB of inlined strings, then
-  nothing pushed to GitHub is reaching him and every "fix" will appear to do
-  nothing.
+- **`EviiveSection.tsx`** (id `LLlhJpB`) — **this is the one on the canvas.**
+  Loads the hosted bundle, guards the editor canvas via `RenderTarget`, and
+  publishes `{active, theme, progress}` for the nav overrides. It does not touch
+  the nav itself.
+- **`EviiveScrollSection.tsx`** (id `WZ8vDZf`) — a leftover stub, not referenced
+  by the homepage. Harmless; safe to delete.
+- **`EviiveNavOverrides.tsx`** — Ocean's. Crossfades the two fixed headers off
+  the `eviive-nav-theme` event. Leave it alone.
 
 ### Framer node ids
 
@@ -151,7 +151,7 @@ guess.
   A 6s watchdog releases the lock if anything fails
 - Background full-bleed behind the nav; headline and rail inset by `--nav-h`
 - Orb centred; layout driven by measured element width, not the window
-- Nav fades out over the dark state, returns white on the light one
+- Nav crossfades between the two headers, driven by the published theme
 
 ## Open
 
