@@ -401,7 +401,13 @@ function Orb() {
     const fit = narrow
       ? (fitted !== null ? fitted : 0.52)
       : (fitted !== null ? Math.min(fitted, 1) : 1)
-    mesh.current.scale.setScalar(o.r * breath * fit)
+    /* Before the reveal is triggered the body is worth zero months, and at
+       1 unit = 1 month that is a six-pixel grey dot in the middle of an
+       otherwise empty field - it reads as a dead pixel, not as a cohort waiting
+       to be counted. The section now holds at p = 0 for the whole approach, so
+       that state is on screen for real rather than flashing past. Hide it, and
+       let it grow in with the odometer. */
+    mesh.current.scale.setScalar(scroll.p < 0.015 ? 0 : o.r * breath * fit)
   })
 
   return (

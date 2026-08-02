@@ -1211,12 +1211,13 @@ nearly 4 years longer</span>
      waiting on "has it arrived" waited forever. The section's exit gate does
      exactly that, so without this the reader is locked in permanently. */
   const EASE=(t)=>{if(t>=1)return 1;const w=6*t;return 1-Math.exp(-w)*(1+w)};
-  /* 2600 was tuned when the reader could still scroll during it. Now the
-     controller LOCKS input until this lands, so its length is dead time on the
-     page - 600ms of scroll followed by two seconds of nothing, which reads as
-     stuck rather than weighty. 1500 keeps the acceleration legible while the
-     hold stays inside what a reader will sit through. */
-  const DUR=1500;
+  /* This is dead time: the controller holds input until the scene lands, so
+     every millisecond here is a millisecond the page cannot move. 2600 was
+     tuned back when the reader could still scroll during it; 1500 still read as
+     stuck. Shortening beats re-curving - an animation that feels slow is almost
+     never the wrong easing, it is the wrong duration - and 900 keeps the
+     acceleration legible while staying inside what a reader will sit through. */
+  const DUR=900;
   let target=0, from=0, t0=-1e9;
 
   const ENTER_AT = 0.75;   /* intro is finished this far into the approach */
@@ -1226,19 +1227,18 @@ nearly 4 years longer</span>
        this the quantiser would keep recomputing the target from the scroll
        position and stamp out the head start below, so the scene could not begin
        until the scroll had already travelled half way. */
-    if (window.__eviiveDriving) return;
+    if (window.__eviiveDriving || window.__eviiveOwned) return;
     const r = pin.getBoundingClientRect();
     const travel = r.height - innerHeight;
 
-    /* APPROACH. While the section is still rising into view its top is below
-       the fold, raw would clamp to 0, and the composition sat frozen on 6.4
-       until you scrolled again — the section felt dead on arrival. Instead the
-       approach drives progress 0 -> 0.5 directly, so the odometer counts up to
-       6.4 and the orb settles while the section is still coming up, and it has
-       finished by ENTER_AT of the way in. This is scrubbed, not tweened: the
-       tween belongs to the deliberate step between states, whereas here the
-       scroll IS the timeline, so `from` is pinned to the target to make the
-       easing a no-op. */
+    /* APPROACH. Standalone, the composition scrubs up to 6.4 as the section
+       rises, so it is never dead on arrival.
+       In the embedded build this never runs: __eviiveOwned is set above and the
+       controller drives progress itself, holding the scene at 0 until the
+       section actually fills the viewport and only then playing the reveal.
+       Scrubbing there was also what made one flick cross two states - progress
+       had already reached 0.5 before the reader had arrived, so the step that
+       should have brought them to 6.4 took them to EVIIVE instead. */
     if (r.top > 0){
       const enter = clamp(1 - r.top / innerHeight, 0, 1);
       target = from = scroll.p = clamp(enter / ENTER_AT, 0, 1) * 0.5;

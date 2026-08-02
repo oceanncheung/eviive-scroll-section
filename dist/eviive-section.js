@@ -3,8 +3,8 @@
 
 const CSS = ".eviive-root{--dark:#022C3B;--white:#FFFFFF;--electric:#67EAFF;--gutter:max(24px, calc((calc(var(--vw) * 1) - 1512px) / 2 + 24px));--s12:12px;--s16:16px;--s48:48px;--s96:96px;--nav-h:0px;--pad-t:calc(48px + var(--nav-h));--pad-b:96px;--f-display-mono:102px;--f-h2:51px;--f-h3:40px;--f-h4:25px;--f-small:14px;--f-mini:12px;--ink:rgba(255,255,255,.96);--soft:rgba(248,246,242,.42);--accent:#67EAFF;--ghost:rgba(248,246,242,.22)}.eviive-root,.eviive-root *{box-sizing:border-box}.eviive-root{background:var(--dark)}.eviive-root{margin:0;background:var(--dark);font-family:Inter,system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}.eviive-root .pin{position:relative;height:calc(var(--vh) * 2)}.eviive-root .snap{position:absolute;left:0;width:100%;height:calc(var(--vh) * 1);scroll-snap-align:start;scroll-snap-stop:always;pointer-events:none}.eviive-root .snap.a{top:0}.eviive-root .snap.b{top:calc(var(--vh) * 1)}.eviive-root .snap.c{top:calc(var(--vh) * 2)}.eviive-root .sticky{position:sticky;top:0;height:calc(var(--vh) * 1);overflow:hidden;background:var(--dark)}.eviive-root #scene{position:absolute;inset:0}.eviive-root #scene canvas{display:block}.eviive-root .ui{position:absolute;inset:0;pointer-events:none;opacity:0}.eviive-root .headline{position:absolute;left:var(--gutter);top:var(--pad-t);margin:0;font-size:var(--f-h2);line-height:1.18;letter-spacing:-.03em;font-weight:400;color:var(--ink);max-width:26ch}.eviive-root .headline .ln{display:block;white-space:pre-wrap}.eviive-root .headline #l1a{position:absolute;left:0;top:0;width:max-content;max-width:17ch}.eviive-root .headline #line2{color:var(--accent)}.eviive-root .headline .wd{display:inline-block;white-space:pre}.eviive-root .headline .wd b{display:inline-block;font-weight:inherit;will-change:transform,filter,opacity}.eviive-root .readout{position:absolute;left:var(--gutter);bottom:var(--pad-b);text-align:left;display:flex;flex-direction:column;align-items:flex-start}.eviive-root .odo-row{display:flex;align-items:flex-start;justify-content:flex-start;gap:12px;margin-bottom:calc(var(--f-display-mono) * -.275)}.eviive-root .odo-unit{font-size:var(--f-h3);line-height:1;color:var(--ink);letter-spacing:-.02em;align-self:flex-start}.eviive-root .readout .unit{margin-top:6px;font-size:var(--f-h4);line-height:1.4;color:var(--soft);letter-spacing:-.02em}.eviive-root .odo{display:flex;justify-content:flex-start;align-items:flex-start;font-family:JetBrains Mono,monospace;font-size:var(--f-display-mono);line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}.eviive-root .odo-col{height:1.55em;overflow:hidden;width:.6em;--eat:0%;--fade:2.4%;-webkit-mask-image:linear-gradient(180deg,transparent calc(17.7% + var(--eat) - var(--fade)),#000 calc(17.7% + var(--eat) + var(--fade)),#000 calc(82.3% - var(--eat) - var(--fade)),transparent calc(82.3% - var(--eat) + var(--fade)));mask-image:linear-gradient(180deg,transparent calc(17.7% + var(--eat) - var(--fade)),#000 calc(17.7% + var(--eat) + var(--fade)),#000 calc(82.3% - var(--eat) - var(--fade)),transparent calc(82.3% - var(--eat) + var(--fade)))}.eviive-root .odo-col .stack{will-change:transform,filter}.eviive-root .odo-col i{display:block;height:1em;font-style:normal;text-align:center;letter-spacing:-.02em}.eviive-root .odo-pt{width:.34em;height:1.55em;display:flex;align-items:center;justify-content:center}.eviive-root .rail{position:absolute;right:var(--gutter);top:calc(var(--pad-b) + var(--nav-h));bottom:var(--pad-b);width:120px;contain:layout style}.eviive-root .rail i{position:absolute;right:0;top:0;display:block;height:1px;width:64px;background:var(--soft);font-style:normal;transform-origin:100% 50%;will-change:transform}.eviive-root .rail i.mark{width:0;height:1px;background:none}.eviive-root .rail i.mark b{position:absolute;right:0;top:0;display:block;height:1px;width:300px;background:var(--ink);transform-origin:100% 50%;will-change:transform}.eviive-root .rail i.mark span{position:absolute;right:0;top:50%;white-space:nowrap;font-style:normal;font-size:var(--f-h4);line-height:1.4;letter-spacing:-.02em;color:var(--ink);will-change:transform,filter,opacity}.eviive-root .caption{position:absolute;right:calc(var(--gutter) + 52px);bottom:var(--pad-b);margin:0;max-width:74ch;text-align:right;text-wrap:balance;font-size:11px;line-height:1.55;color:var(--soft);opacity:0;will-change:opacity}.eviive-root .cue{position:absolute;left:50%;bottom:var(--s48);width:1px;height:44px;transform:translate(-50%);overflow:hidden;will-change:opacity}.eviive-root .cue i{position:absolute;inset:0;font-style:normal;background:linear-gradient(transparent,var(--soft),transparent);animation:cueRun 2.6s cubic-bezier(.4,0,.2,1) infinite}@keyframes cueRun{0%{transform:translateY(-100%)}to{transform:translateY(100%)}}.eviive-root .next{position:relative;height:calc(var(--vh) * 1);background:var(--white);scroll-snap-align:start}.eviive-root .next .inner{padding:var(--s96) var(--gutter);color:#0b2028}.eviive-root .next h3{margin:0 0 var(--s16);font-size:var(--f-h4);font-weight:500;letter-spacing:-.025em}.eviive-root .next p{margin:0;font-size:var(--f-small);color:#0b202880;max-width:52ch}.eviive-root .hud{position:fixed;right:14px;bottom:14px;z-index:50;display:none;font-family:JetBrains Mono,monospace;font-size:11px;line-height:1.7;color:#9fb;background:#01161ee0;border:1px solid rgba(255,255,255,.18);padding:10px 12px;white-space:pre;pointer-events:none}.eviive-root .hud.on{display:block}@media(prefers-reduced-motion:reduce){.eviive-root .pin{height:calc(var(--vh) * 1)}.eviive-root .cue{display:none}.eviive-root .headline .ltr{--f:100%}.eviive-root .caption{opacity:1}}.eviive-root.stacked .headline{left:var(--gutter);right:var(--gutter);top:var(--pad-t);max-width:calc((100% - var(--gutter) * 2) * .85)}.eviive-root.stacked .rail{left:var(--gutter);right:var(--gutter);width:auto;top:var(--rail-y);bottom:auto;height:52px}.eviive-root.stacked .rail i{inset:auto auto 0 0;width:1px;height:64px;transform-origin:50% 100%}.eviive-root.stacked .rail i.mark{width:1px;height:100%}.eviive-root.stacked .rail i.mark b{inset:auto auto 0 0;width:1px;height:220px;transform-origin:50% 100%}.eviive-root.stacked .rail i.mark span{inset:auto auto 0 50%;text-align:center;white-space:nowrap}.eviive-root.stacked .readout{left:var(--gutter);right:var(--gutter);bottom:auto;top:var(--readout-y)}.eviive-root.stacked .caption{left:var(--gutter);right:var(--gutter);text-align:left;bottom:var(--pad-b);max-width:none}.eviive-root{--rail-y:56%;--readout-y:70%}.eviive-root.stacked{--pad-b:24px}.eviive-root.lte-809{--rail-y:54%;--readout-y:66%}.eviive-root.lte-1199{--f-display-mono:82px;--f-h2:40px;--f-h3:32px;--f-h4:21px;--f-small:14px;--f-mini:12px}.eviive-root.lte-809{--f-display-mono:65px;--f-h2:25px;--f-h3:21px;--f-h4:18px;--f-small:12px;--f-mini:11px}\n"
 const MARKUP = "<section class=\"pin\" id=\"pin\">\n  <div class=\"snap a\"></div>\n  <div class=\"snap b\"></div>\n  \n\n  <div class=\"sticky\">\n    <div id=\"scene\"></div>\n\n    <div class=\"ui\" id=\"ui\">\n      <h2 class=\"headline\">\n        <span class=\"ln\" id=\"l1a\">Therapy-not\naligned patients</span>\n        <span class=\"ln\" id=\"l1b\">Therapy-aligned patients</span>\n        <span class=\"ln\" id=\"line2\">stay progression-free\nnearly 4 years longer</span>\n      </h2>\n\n      <div class=\"readout\">\n        <div class=\"odo-row\">\n          <div class=\"odo\" id=\"odo\"></div>\n          <div class=\"odo-unit\" id=\"odounit\">months</div>\n        </div>\n        <div class=\"unit\">median progression-free survival</div>\n\n      </div>\n\n      <div class=\"rail\" id=\"rail\"></div>\n\n      <p class=\"caption\" id=\"caption\">124 first-line metastatic melanoma patients treated with\n        anti-PD-1 monotherapy or anti-PD-1 + anti-CTLA-4 combination therapy. 85 patients (69%)\n        covered by the platform's prediction cut-offs.</p>\n\n      <div class=\"cue\" id=\"cue\"><i></i></div>\n    </div>\n  </div>\n</section>\n\n\n\n<svg width=\"0\" height=\"0\" aria-hidden=\"true\" style=\"position:absolute\">\n  <filter id=\"mb-tens\"   x=\"-25%\" y=\"-70%\" width=\"150%\" height=\"240%\"><feGaussianBlur id=\"fe-tens\"   stdDeviation=\"0 0\"/></filter>\n  <filter id=\"mb-ones\"   x=\"-25%\" y=\"-70%\" width=\"150%\" height=\"240%\"><feGaussianBlur id=\"fe-ones\"   stdDeviation=\"0 0\"/></filter>\n  <filter id=\"mb-tenths\" x=\"-25%\" y=\"-70%\" width=\"150%\" height=\"240%\"><feGaussianBlur id=\"fe-tenths\" stdDeviation=\"0 0\"/></filter>\n</svg>\n\n<div class=\"hud\" id=\"hud\"></div>"
-const DRIVER = "window.__eviiveStop&&window.__eviiveStop();let __eviiveDead=!1;window.__eviiveStop=function(){__eviiveDead=!0},(()=>{\"use strict\";const It=matchMedia(\"(prefers-reduced-motion: reduce)\").matches,g=(t,n,e)=>t<n?n:t>e?e:t,E=(t,n,e)=>t+(n-t)*e,V=(t,n,e)=>{const o=g((e-t)/(n-t),0,1);return o*o*(3-2*o)},kt=6.4,Dt=53.5,a=window.__eviiveScroll=window.__eviiveScroll||{p:0};a.mx=a.my=0,addEventListener(\"pointermove\",t=>{a.mx=t.clientX/__eviiveVP.w*2-1,a.my=1-t.clientY/__eviiveVP.h*2},{passive:!0});const Tt=document.getElementById(\"pin\"),T=document.getElementById(\"ui\"),H=document.getElementById(\"line2\"),q=document.getElementById(\"l1a\"),W=document.getElementById(\"l1b\"),m=document.getElementById(\"caption\"),Ht=document.getElementById(\"cue\"),vt=document.getElementById(\"hud\"),z=document.getElementById(\"odo\"),qt=[{key:\"tens\",mul:.1},{key:\"ones\",mul:1},{key:\"point\"},{key:\"tenths\",mul:10}],Y={},st={},O={};let it=102;for(const t of qt){if(t.key===\"point\"){const o=document.createElement(\"div\");o.className=\"odo-pt\",o.textContent=\".\",z.appendChild(o);continue}const n=document.createElement(\"div\");n.className=\"odo-col\";const e=document.createElement(\"div\");e.className=\"stack\";for(let o=0;o<=44;o++){const i=document.createElement(\"i\");i.textContent=String(o%10),e.appendChild(i)}n.appendChild(e),z.appendChild(n),Y[t.key]={st:e,col:n,mul:t.mul},O[t.key]=0}function ct(){Y.ones&&(it=Y.ones.col.getBoundingClientRect().height||it)}ct(),document.fonts&&document.fonts.ready&&document.fonts.ready.then(ct),addEventListener(\"resize\",ct,{passive:!0});const Wt={tens:[0,0,5],ones:[0,6,23],tenths:[0,14,35]};function Yt(t,n){const e=Wt[t];return n<=.5?E(e[0],e[1],n/.5):E(e[1],e[2],(n-.5)/.5)}function Ot(t){for(const n in Y){const{st:e,col:o}=Y[n],i=Yt(n,t);e.style.transform=`translateY(${(.275-i).toFixed(4)}em)`;const l=st[n]===void 0?i:st[n];st[n]=i;const s=Math.abs(i-l);O[n]=O[n]*.84+s*.16;const p=g(O[n]*30,0,1);o.style.setProperty(\"--eat\",(p*11.5).toFixed(2)+\"%\"),o.style.setProperty(\"--fade\",(2.4+p*11).toFixed(2)+\"%\");const h=g(O[n]*it*.3,0,9);e.style.filter=h>.3?`url(#mb-${n})`:\"none\";const r=document.getElementById(`fe-${n}`);if(r&&r.setAttribute(\"stdDeviation\",`0 ${h.toFixed(2)}`),n===\"tens\"){const f=V(.55,.78,t);o.style.opacity=f,o.style.width=(.6*f).toFixed(4)+\"em\"}}}let G=24;const C=()=>__eviiveVP.w/__eviiveVP.h<1.15||__eviiveVP.w<900;function Gt(){const t=x.getBoundingClientRect();G=Math.round(C()?t.left:__eviiveVP.w-t.right)}const Nt=22,bt=3,at=80,Xt=30,Ut=34,zt=10,Kt=17,Zt=32,jt=18,Jt=10,Be=[6,54],x=document.getElementById(\"rail\"),lt=[];for(let t=0;t<at;t++){const n=document.createElement(\"i\");x.appendChild(n),lt.push(n)}const wt=[{m:6,label:\"not aligned with prediction\"},{m:54,label:\"aligned with prediction\"}],Mt=wt.map(t=>{const n=document.createElement(\"i\");return n.className=\"mark\",n.innerHTML=`<b></b><span>${t.label}</span>`,x.appendChild(n),n}),K=document.getElementById(\"odounit\"),B=document.querySelector(\".readout\"),u={top:0,h:1,left:0,w:1},Z=[],j={w:-1,h:-1},Et=document.querySelector(\".readout .unit\");function Ct(t){const n=t.style.whiteSpace;t.style.whiteSpace=\"nowrap\";const e=document.createElement(\"span\");e.style.cssText=\"display:inline-block;width:0;height:0;vertical-align:baseline\",t.appendChild(e);const o=e.getBoundingClientRect().bottom-t.getBoundingClientRect().top;return e.remove(),t.style.whiteSpace=n,o}function Rt(t){const n=getComputedStyle(t),e=document.createElement(\"span\");e.style.cssText=`position:absolute;left:-9999px;top:0;visibility:hidden;display:block;white-space:nowrap;font-family:${n.fontFamily};font-size:${n.fontSize};font-weight:${n.fontWeight};letter-spacing:${n.letterSpacing};line-height:${n.lineHeight}`,e.textContent=\"x\",document.body.appendChild(e);const o=document.createElement(\"span\");o.style.cssText=\"display:inline-block;width:0;height:0;vertical-align:baseline\",e.appendChild(o);const i=e.getBoundingClientRect().bottom-o.getBoundingClientRect().bottom;return e.remove(),i}function J(){j.w=__eviiveVP.w,j.h=__eviiveVP.h,a.stacked=C();var t=document.querySelector(\".eviive-root\")||document.documentElement;t.classList.toggle(\"stacked\",a.stacked),Gt(),m.style.left=m.style.right=m.style.bottom=\"\",m.style.textAlign=m.style.maxWidth=\"\",B.style.top=B.style.bottom=\"\",x.style.top=x.style.bottom=\"\";const n=parseFloat(getComputedStyle(document.querySelector(\".eviive-root\")||document.documentElement).getPropertyValue(\"--nav-h\"))||0;a.orbY=.5+n/(2*__eviiveVP.h),a.orbX=.5,a.orbDia=0;const e=z.querySelectorAll(\".odo-col\"),o=e[e.length-1],i=o&&o.querySelector(\"i\");if(!i)return;const l=parseFloat(getComputedStyle(z).fontSize);K.style.transform=\"none\";const s=o.getBoundingClientRect().top+.2744*l+Ct(i),p=K.getBoundingClientRect().top+Ct(K);K.style.transform=`translateY(${(s-p).toFixed(2)}px)`;const h=x.getBoundingClientRect();if(u.top=h.top,u.h=h.height,u.left=h.left,u.w=h.width,C()){m.style.transform=\"none\",B.style.transform=\"none\";const L=parseFloat(getComputedStyle(document.documentElement).getPropertyValue(\"--pad-b\"))||96,_t=40,gt=32,xe=m.getBoundingClientRect().height,Ft=__eviiveVP.w>809;m.style.bottom=L+\"px\",Ft&&(m.style.left=\"auto\",m.style.right=G+\"px\",m.style.textAlign=\"right\",m.style.maxWidth=\"44%\");const Lt=Ft?L:L+xe+_t;B.style.top=\"auto\",B.style.bottom=Lt.toFixed(0)+\"px\";const ve=B.getBoundingClientRect().height;x.style.top=\"auto\",x.style.bottom=(Lt+ve+gt).toFixed(0)+\"px\";const U=x.getBoundingClientRect();u.top=U.top,u.h=U.height,u.left=U.left,u.w=U.width;const be=40,we=0,Me=.84,Ee=document.querySelector(\".headline\"),Ce=[q,W,H].map(xt=>xt.style.display);q.style.display=\"none\",W.style.display=\"\",H.style.display=\"\";const Re=Ee.getBoundingClientRect().bottom;[q,W,H].forEach((xt,Ae)=>{xt.style.display=Ce[Ae]});const Vt=Re+we,$t=U.top-be;a.orbY=(Vt+$t)/2/__eviiveVP.h;const Pe=__eviiveVP.w-2*G;a.orbDia=Math.max(Math.min(($t-Vt)*Me,Pe*.78),0);return}const r=x.getBoundingClientRect().bottom;m.style.transform=\"none\";const f=m.getBoundingClientRect().bottom-Rt(m);m.style.transform=`translateY(${(r-f).toFixed(2)}px)`,B.style.transform=\"none\";const $=Et.getBoundingClientRect().bottom-Rt(Et);B.style.transform=`translateY(${(r-$).toFixed(2)}px)`,Mt.forEach((L,_t)=>{const gt=L.style.display;L.style.display=\"block\",Z[_t]=L.lastElementChild.offsetWidth,L.style.display=gt});const R=document.querySelector(\".headline\"),b={right:R.offsetLeft+R.offsetWidth,bottom:R.offsetTop+R.offsetHeight},S=__eviiveVP.w-G-30,c=Math.max(Z[0]||0,Z[1]||0)||200,y=b.right+24,_=S-c-40,w=__eviiveVP.h/2/Math.tan(38*Math.PI/360)/6.4,P=__eviiveVP.w/2,M=(a.orbY||.5)*__eviiveVP.h,F=Math.max(0,M-b.bottom),A=P-(b.right-4),I=A>=0?Math.sqrt(A*A+F*F):F,D=S-c-P,St=Math.min(I,D);a._dbg={A:Math.round(A),dy:Math.round(F),orbCy:Math.round(M),hlB:Math.round(b.bottom),hlR:Math.round(b.right),capL:Math.round(I),capR:Math.round(D),natR:Math.round(w),orbY:+(a.orbY||0).toFixed(4)},a.orbX=.5,a.orbDia=St>=w?0:Math.max(St*2,80)}function Qt(t){u.top=x.offsetTop,u.h=x.offsetHeight,u.left=x.offsetLeft,u.w=x.offsetWidth;const n=C()?u.w:u.h,e=C()?__eviiveVP.w*.5-u.left:(a.orbY||.5)*__eviiveVP.h-u.top,i=Math.max(e,1)/Math.max(t,.05),l=a.p,s=__eviiveVP.h/2/Math.tan(38*Math.PI/360),p=__eviiveVP.w*(a.orbX||.5)+s/6.4,h=__eviiveVP.w-G-30,r=V(.56,.86,l),f=[1-r,r],$=[];wt.forEach((c,y)=>{const _=e+(c.m-t)*i,d=Mt[y],w=d.lastElementChild,P=Math.min(V(-60,20,_),1-V(n*.56,n*.78,_)),M=f[y]*P;if(d.style.display=M>.004?\"block\":\"none\",M<=.004)return;$.push({m:c.m,o:M});const F=Z[y]||1,I=30+Math.max((h-p-F)/2,40)*(.52+.48*Q(_,n)),D=C()?Zt+jt*Q(_,n):Math.max(I-Nt,24);C()?(d.style.transform=`translate3d(${_.toFixed(1)}px,0,0)`,d.firstElementChild.style.transform=`scaleY(${(D/220).toFixed(4)})`,w.style.transform=`translate3d(-50%,${-(D+Jt).toFixed(1)}px,0)`):(d.style.transform=`translate3d(0,${_.toFixed(1)}px,0)`,d.firstElementChild.style.transform=`scaleX(${(D/300).toFixed(4)})`,w.style.transform=`translate3d(${(-I).toFixed(1)}px,-50%,0)`),d.style.opacity=M.toFixed(3),w.style.filter=M>.995?\"none\":`blur(${((1-M)*20).toFixed(2)}px)`});const R=Math.min(Math.abs(l),Math.abs(l-.5),Math.abs(l-1))<.004;let b=0,S=0;for(;S<at;b+=bt){const c=e+(b-t)*i;if(c>n+12)break;if(c<-12)continue;const y=$.find(I=>Math.abs(I.m-b)<bt*.5),_=y?y.o:0;if(_>.996)continue;const d=lt[S++];d._on!==1&&(d.style.display=\"block\",d._on=1);const w=Math.round(c*10)/10,P=Math.round(C()?zt+Kt*Q(c,n):Xt+Ut*Q(c,n));(d._y!==w||d._w!==P)&&(d.style.transform=C()?`translate3d(${w}px,0,0) scaleY(${(P/64).toFixed(4)})`:`translate3d(0,${w}px,0) scaleX(${(P/64).toFixed(4)})`,d._y=w,d._w=P);const F=(R?c<-2||c>n+2?0:1:c<0?Math.max(0,1+c/12):c>n?Math.max(0,1-(c-n)/12):1)*(1-_),A=Math.round(F*50)/50;d._e!==A&&(d.style.opacity=A,d._e=A)}for(let c=S;c<at;c++){const y=lt[c];y._on!==0&&(y.style.display=\"none\",y._on=0)}}const te=1.9;function Q(t,n){const e=Math.min(Math.abs(t/n-.5)*2,1),o=Math.cos(e*Math.PI/2);return Math.pow(o*o,te)}function ee(t){const n=t.textContent.split(/(\\s+)/);t.textContent=\"\";const e=[];for(const o of n){if(!o.trim()&&o.includes(`\n`)){t.appendChild(document.createElement(\"br\"));continue}const i=document.createElement(\"span\");i.className=\"wd\";const l=document.createElement(\"b\");l.textContent=o,i.appendChild(l),t.appendChild(i),o.trim()&&e.push(l)}return e}const ne=new Map([q,W,H].map(t=>[t,ee(t)])),tt=850,rt=100,oe=240,se=10,Pt=10,dt=fe(.44,0,.56,1),pt=[{els:[q],inAt:()=>v<=.5,armAt:()=>v===.5,armExact:!0,exitY:-1,canReverse:!0},{els:[W,H],inAt:()=>v>=1,exitY:-1,exitReverse:!0}],mt=380,ut=.45;for(const t of pt)t.words=t.els.reduce((n,e)=>n.concat(ne.get(e)),[]),t.span=tt+rt*Math.max(t.words.length-1,0),t.maxD0=rt*Math.max(t.words.length-1,0),t.xspan=mt+t.maxD0*ut,t.t=0,t.x=0;function et(){for(const t of pt){const n=t.els.map(l=>l.style.display);t.els.forEach(l=>{l.style.display=\"\"});let e=null,o=-1,i=0;for(const l of t.words){const s=Math.round(l.getBoundingClientRect().top);(e===null||Math.abs(s-e)>4)&&(o++,e=s,i=0),l._d0=o*oe+i*rt,i++}t.maxD0=Math.max(0,...t.words.map(l=>l._d0)),t.span=tt+t.maxD0,t.xspan=mt+t.maxD0*ut,t.els.forEach((l,s)=>{l.style.display=n[s]})}}let ht=-1,ft=0,N=16,nt=1,yt=0;function ie(t,n){N=ht<0?16:Math.min(n-ht,64),ht=n,v!==yt&&(nt=v>yt?1:-1,yt=v);for(const e of pt){const o=e.inAt(),i=e.armAt?e.armAt():o,l=e.x>.02;o&&!e.was&&(e.x=0),i&&!e.wasArmed&&(e.revEntry=l,e.t=0,e.x=0),e.was=o,e.wasArmed=i,o?(e.x=g(e.x-N/e.xspan,0,1),i&&(e.t=g(e.t+N/e.span,0,1))):(e.x=g(e.x+N/e.xspan,0,1),e.x>=1&&(e.t=0));for(const r of e.els)r._clr!==1&&(r.style.transform=\"none\",r.style.opacity=\"\",r.style.filter=\"none\",r._clr=1);const s=e.x>1e-4,p=s?e.x<.999:e.t>5e-4;for(const r of e.els){const f=p?\"\":\"none\";r._d!==f&&(r.style.display=f,r._d=f)}if(!p)continue;const h=s?e.x*e.xspan:e.t*e.span;for(let r=0;r<e.words.length;r++){const f=e.words[r],$=f._d0||0,R=nt<0?e.maxD0-$:$,b=s?1-dt(g((h-R*ut)/mt,0,1)):dt(g((h-R)/tt,0,1)),S=s?-nt:nt,c=f,y=Math.round(b*100)/100;c._o!==y&&(c.style.opacity=y,c._o=y);const _=Math.round((1-b)*se*S*4)/4;c._y!==_&&(c.style.transform=Math.abs(_)<.2?\"none\":`translate3d(0,${_}px,0)`,c._y=_);const d=Math.round((1-b)*Pt*4)/4;c._b!==d&&(c.style.filter=d<.2?\"none\":`blur(${d}px)`,c._b=d)}}}const ot=(t,n,e)=>`rgba(${Math.round(E(t[0],n[0],e))},${Math.round(E(t[1],n[1],e))},${Math.round(E(t[2],n[2],e))},${E(t[3],n[3],e).toFixed(3)})`,ce=[255,255,255,.96],ae=[11,32,40,.94],le=[248,246,242,.42],re=[11,32,40,.52],de=[248,246,242,.22],pe=[11,32,40,.24],me=[103,234,255,1],ue=[6,132,177,1];function he(t){T.style.setProperty(\"--ink\",ot(ce,ae,t)),T.style.setProperty(\"--soft\",ot(le,re,t)),T.style.setProperty(\"--ghost\",ot(de,pe,t)),T.style.setProperty(\"--accent\",ot(me,ue,t))}function fe(t,n,e,o){const i=s=>{const p=1-s;return 3*p*p*s*t+3*p*s*s*e+s*s*s},l=s=>{const p=1-s;return 3*p*p*s*n+3*p*s*s*o+s*s*s};return s=>{if(s<=0)return 0;if(s>=1)return 1;let p=0,h=1,r=0;for(let f=0;f<24;f++)r=(p+h)/2,i(r)<s?p=r:h=r;return l((p+h)/2)}}const ye=t=>{if(t>=1)return 1;const n=6*t;return 1-Math.exp(-n)*(1+n)},_e=1500;let v=0,k=0,X=-1e9;const ge=.75;function At(){if(window.__eviiveDriving)return;const t=Tt.getBoundingClientRect(),n=t.height-__eviiveVP.h;if(t.top>0){const i=g(1-t.top/__eviiveVP.h,0,1);v=k=a.p=g(i/ge,0,1)*.5,X=-1e9;return}const e=n>0?g(-t.top/n,0,1):0,o=.5+Math.round(e)/2;o!==v&&(k=a.p,v=o,X=performance.now())}J(),et(),document.fonts&&document.fonts.ready&&document.fonts.ready.then(()=>{J(),et()}),addEventListener(\"resize\",()=>{J(),et()}),addEventListener(\"scroll\",At,{passive:!0}),At();function Bt(t){if(__eviiveDead)return;a.p=It?v:k+(v-k)*ye(g((t-X)/_e,0,1));const n=a.p;try{(j.w!==__eviiveVP.w||j.h!==__eviiveVP.h)&&(J(),et()),Ot(n),Qt(n<=.5?E(0,6,n/.5):Math.exp(E(Math.log(6),Math.log(54),(n-.5)/.5))),ie(n,t),he(V(.58,.96,n))}catch(o){window.__eviiveErr||(window.__eviiveErr=o.stack||String(o),console.error(\"[eviive] frame:\",o))}T.style.opacity=V(.02,.14,n),ft=g(ft+(v>=1?1:-1)*N/tt,0,1);const e=dt(ft);m.style.opacity=(e*.9).toFixed(3),m.style.filter=e>.995?\"none\":`blur(${((1-e)*Pt).toFixed(2)}px)`,Ht.style.opacity=1-V(.02,.18,n),vt.classList.contains(\"on\")&&(vt.textContent=`p       ${n.toFixed(3)}\ncamZ    ${(-47.1*n).toFixed(2)}\nmonths  ${E(kt,Dt,n).toFixed(1)}`),requestAnimationFrame(Bt)}requestAnimationFrame(Bt),window.__eviive={to(t){return k=a.p,v=t,X=performance.now(),t},seek(t){return v=k=a.p=g(t,0,1),X=-1e9,a.p},get progress(){return a.p},states:{a:0,b:1}}})();\n"
-const SCENE = "import{useRef as h,useMemo as w}from\"https://esm.sh/react@19.2.8\";import{createRoot as B}from\"https://esm.sh/react-dom@19.2.8/client?deps=react@19.2.8,react-dom@19.2.8\";import{Canvas as O,useFrame as f,useThree as k}from\"https://esm.sh/@react-three/fiber@9.7.0?deps=react@19.2.8,react-dom@19.2.8,three@0.185.1\";import{EffectComposer as P,DepthOfField as S,Bloom as L,Noise as F,Vignette as I}from\"https://esm.sh/@react-three/postprocessing@3.0.4?deps=react@19.2.8,react-dom@19.2.8,three@0.185.1,postprocessing@6.39.4\";import{BlendFunction as V}from\"https://esm.sh/postprocessing@6.39.4?deps=three@0.185.1\";import*as u from\"https://esm.sh/three@0.185.1\";import{Fragment as oe,jsx as i,jsxs as g}from\"https://esm.sh/react@19.2.8/jsx-runtime\";var y=-6.4,A=-53.5,H=6.4,x=A+H,v=(e,t,n)=>e<t?t:e>n?n:e,a=(e,t,n)=>e+(t-e)*n,b=(e,t,n)=>{let o=v((n-e)/(t-e),0,1);return o*o*(3-2*o)},s=window.__eviiveScroll=window.__eviiveScroll||{p:0};function G(){let e=h(),t=h(),n=w(()=>({uLift:{value:0},uT:{value:0}}),[]);return f(({camera:o,clock:c})=>{e.current&&e.current.position.copy(o.position);let r=t.current&&t.current.uniforms;r&&(r.uLift.value=b(.58,.96,s.p),r.uT.value=c.elapsedTime)}),g(\"mesh\",{ref:e,scale:140,renderOrder:-1,children:[i(\"sphereGeometry\",{args:[1,48,32]}),i(\"shaderMaterial\",{ref:t,side:u.BackSide,depthWrite:!1,uniforms:n,vertexShader:`\n          varying vec3 vP;\n          void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }\n        `,fragmentShader:`\n          precision highp float;\n          varying vec3 vP;\n          uniform float uLift;\n          uniform float uT;\n          float hash(vec2 p){\n            p = fract(p * vec2(443.897, 441.423));\n            p += dot(p, p + 19.19);\n            return fract((p.x + p.y) * p.x);\n          }\n          vec3 s2l(vec3 c){\n            return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(vec3(0.04045), c));\n          }\n          void main(){\n            vec3 d = normalize(vP);\n            vec2 q = d.xy;\n            float t1 = uT * 0.047, t2 = uT * 0.034;\n            vec2 flow = vec2(\n              sin(q.y * 1.70 + t1) + 0.50 * sin(q.y * 3.05 - t2 * 1.7),\n              cos(q.x * 1.45 - t2) + 0.50 * cos(q.x * 2.60 + t1 * 1.3)\n            ) * 0.185;\n            vec2 ctr = vec2(sin(uT * 0.039) * 0.17, cos(uT * 0.029) * 0.13);\n            float rad = clamp(length(q + flow - ctr) * 1.12, 0.0, 1.0);\n            vec3 navy     = s2l(vec3(0.008, 0.173, 0.231));  \n            vec3 navyDeep = s2l(vec3(0.004, 0.110, 0.153));   \n            vec3 dark = mix(navy, navyDeep, smoothstep(0.15, 1.0, rad));\n            vec3 liteC = s2l(vec3(0.980, 0.995, 1.000));      \n            vec3 liteE = s2l(vec3(0.741, 0.869, 0.929));      \n            vec3 lite = mix(liteC, liteE, smoothstep(0.10, 1.0, rad));\n            vec3 c = mix(dark, lite, uLift);\n            c += (hash(gl_FragCoord.xy) - 0.5) * (1.5/255.0);   \n            gl_FragColor = vec4(c, 1.0);\n          }\n        `})]})}var W=`\n  varying vec3 vN; varying vec3 vV; varying vec3 vP;\n  uniform float uT; uniform float uWobAmp; uniform float uOrganic; uniform float uChurn; uniform vec2 uPtr;\n  float h31(vec3 p){ p=fract(p*0.3183099+vec3(.11,.17,.13)); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }\n  float n3(vec3 x){ vec3 i=floor(x),f=fract(x); f=f*f*f*(f*(f*6.0-15.0)+10.0);\n    return mix(mix(mix(h31(i),h31(i+vec3(1,0,0)),f.x),mix(h31(i+vec3(0,1,0)),h31(i+vec3(1,1,0)),f.x),f.y),\n               mix(mix(h31(i+vec3(0,0,1)),h31(i+vec3(1,0,1)),f.x),mix(h31(i+vec3(0,1,1)),h31(i+vec3(1,1,1)),f.x),f.y),f.z);}\n  float dispAt(vec3 pn){\n    float nz = n3(pn * 1.35 + vec3(uPtr * 0.34, uT * 0.19)) - 0.5;\n    float lobes = sin(pn.y * 1.7 + uT * 0.72 + uPtr.y * 0.85)\n                + sin(pn.x * 1.3 - uT * 0.55 + uPtr.x * 0.85);\n    return nz * 1.6 * uOrganic + lobes * 0.5 * uWobAmp;\n  }\n  void main(){\n    vP = position;\n    vec3 pn = normalize(position);\n    float d0 = dispAt(pn);\n    vec3 pos = pn * (1.0 + d0);\n    vec3 up = abs(pn.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);\n    vec3 t1 = normalize(cross(up, pn));\n    vec3 t2 = cross(pn, t1);\n    const float E = 0.045;\n    vec3 pa = normalize(pn + t1 * E), pb = normalize(pn + t2 * E);\n    vec3 va = pa * (1.0 + dispAt(pa)) - pos;\n    vec3 vb = pb * (1.0 + dispAt(pb)) - pos;\n    vec3 bumped = normalize(cross(va, vb));\n    bumped *= sign(dot(bumped, pn));\n    vN = normalize(normalMatrix * bumped);\n    vec4 mv = modelViewMatrix * vec4(pos, 1.0);\n    vV = -mv.xyz;\n    gl_Position = projectionMatrix * mv;\n  }`,q=`\n  precision highp float;\n  varying vec3 vN; varying vec3 vV; varying vec3 vP;\n  uniform float uT; uniform float uAlpha; uniform vec2 uPtr;\n  float ndv(){ return clamp(dot(normalize(vN), normalize(vV)), 0.0, 1.0); }\n  float fres(float k){ return pow(clamp(1.0 - ndv(), 0.0, 1.0), k); }\n  float band(float inner, float outer){\n    float d = ndv();\n    return smoothstep(outer, inner, d) * smoothstep(0.0, 0.10, d);\n  }\n  float nucleus(){\n    vec3 nn = normalize(vN);\n    vec2 off = vec2(sin(uT * 0.13) * 0.12, cos(uT * 0.105) * 0.09);\n    float d = length(nn.xy - off);\n    float k = 1.0 - smoothstep(0.02, 0.62, d);\n    return k * k * k;                  \n  }\n  const vec3 CORE = vec3(0.62,0.875,0.965);   \n  const vec3 MIDB = vec3(0.42,0.865,0.985);\n  const vec3 EDGE = vec3(0.09,0.42,0.60);\n`,Y=q+`\n  uniform float uMorph;\n  void main(){\n    float m = uMorph;\n    vec3  N = normalize(vN), V = normalize(vV);\n    vec2  bgCtr = vec2(sin(uT * 0.039) * 0.17, cos(uT * 0.029) * 0.13);\n    vec3  L = normalize(vec3(bgCtr.x * 3.6 - 0.22, bgCtr.y * 3.6 + 0.76, 0.52));\n    float thick = pow(ndv(), 0.70);\n    float nuc = nucleus();\n    float rimA = dot(N, L) * 0.5 + 0.5;\n    float rimW = smoothstep(0.02, 0.98, rimA);\n    vec3 pDeep  = mix(vec3(0.22,0.26,0.30), EDGE, m);\n    vec3 pMid   = mix(vec3(0.30,0.36,0.41), MIDB, m);\n    vec3 pLight = mix(vec3(0.86,0.91,0.94), CORE, m);\n    float tilt = sin(uT * 0.115) * 0.55 * m;\n    float roll = cos(uT * 0.083) * 0.10 * m;\n    float g = smoothstep(-0.85 + roll, 0.75 + roll, N.y + N.x * tilt);\n    g = mix(fres(2.0), g, m);\n    vec3 base = mix(pMid, pLight, g);\n    base = mix(base, mix(pMid, pDeep, 0.55), (1.0 - thick) * mix(0.06, 0.22, m));\n    vec3  Ni = normalize(N + L * 0.44 + vec3(0.0, -0.15, 0.0));\n    float shell = smoothstep(0.05, 0.95, dot(Ni, L)) * thick;\n    base = mix(base, pLight, shell * 0.30 * m);\n    float bandDrift = 0.10 + sin(uT * 0.094) * 0.035;\n    base = mix(base, pDeep,\n               band(bandDrift, bandDrift + 0.52) * 0.62 * m * mix(0.22, 1.0, 1.0 - rimW));\n    base = mix(base, pDeep * 0.72, nuc * 0.62);\n    vec3  Hv = normalize(L + V);\n    float trim = (1.25 + sin(uT * 0.137) * 0.16) * m;\n    vec3  c = base\n            + vec3(0.80,0.95,1.00) * fres(3.0) * trim * mix(0.62, 1.0, rimW)\n            + vec3(0.86,0.96,1.00) * pow(max(dot(N, Hv), 0.0),  5.0) * 0.14 * thick * m\n            + vec3(1.00,1.00,1.00) * pow(max(dot(N, Hv), 0.0), 44.0) * 0.20 * m;\n    float aThin  = mix(0.14, 0.60, fres(1.7));\n    float aGlass = min(1.0, mix(1.0, 0.50, g) + fres(2.2) * 0.60);\n    float a = mix(aThin, aGlass, m) * (1.0 + nuc * mix(0.60, 0.32, m));\n    gl_FragColor = vec4(c, min(a, 1.0) * uAlpha);\n  }`,T=.26,Z=1,U=e=>e*e*(3-2*e),j=T/6.4,K=Z/6.4,R=14,X=e=>e<=.5?a(R,0,e/.5):a(0,x,(e-.5)/.5);function M(e){if(e<=.5)return{z:y,r:T,m:0};let t=v((e-.5)/.5,0,1),n=t+.08*Math.sin(Math.PI*t),o=a(y,A,n),c=Math.abs(a(0,x,t)-o);return{z:o,r:c*a(j,K,U(t)),m:b(.1,.82,t)}}function J(){let e=h(),t=h(),n=w(()=>({uT:{value:0},uAlpha:{value:1},uMorph:{value:0},uWobAmp:{value:.012},uOrganic:{value:.016},uChurn:{value:0},uPtr:{value:new u.Vector2}}),[]),o=h({x:0,y:0});return f(({clock:c})=>{let r=t.current&&t.current.uniforms;if(!r||!e.current)return;let l=M(s.p);o.current.x+=((s.mx||0)-o.current.x)*.035,o.current.y+=((s.my||0)-o.current.y)*.035,r.uPtr.value.set(o.current.x,o.current.y),r.uT.value=c.elapsedTime,r.uMorph.value=l.m,r.uWobAmp.value=a(.1,.085,l.m),r.uOrganic.value=a(.095,.105,l.m),r.uChurn.value=0,e.current.position.z=l.z;let m=!!s.stacked,d=Math.tan(38*Math.PI/360),N=__eviiveVP.h/2/d,E=Math.abs(X(s.p)-l.z),z=(.5-(s.orbY||(m?.355:.5)))*2*d;e.current.position.y=z*E;let C=s.orbX||.5;e.current.position.x=m?0:(C-.5)*2*d*(__eviiveVP.w/__eviiveVP.h)*E;let D=1+Math.sin(c.elapsedTime*.62)*a(.062,.024,l.m),p=s.orbDia?s.orbDia*6.4/(2*N):null,_=m?p!==null?p:.52:p!==null?Math.min(p,1):1;e.current.scale.setScalar(l.r*D*_)}),g(\"mesh\",{ref:e,position:[0,0,y],scale:T,children:[i(\"sphereGeometry\",{args:[1,112,80]}),i(\"shaderMaterial\",{ref:t,uniforms:n,vertexShader:W,fragmentShader:Y,transparent:!0})]})}function Q(){let e=h(),t=w(()=>new u.Color,[]);return f(()=>{let n=b(.58,.96,s.p);t.setRGB(a(.02,.93,n),a(.105,.96,n),a(.145,.962,n)),e.current.color.copy(t)}),i(\"fog\",{ref:e,attach:\"fog\",args:[\"#0a2732\",14,62]})}function $(){let e=k();return f(()=>{window.__three=e}),null}function ee({dof:e,vignette:t}){let{camera:n}=k();return f(()=>{let o=s.p;n.position.y=0,n.position.z=o<=.5?a(R,0,o/.5):a(0,x,(o-.5)/.5),n.updateMatrixWorld();let c=M(o),r=v(o/.5,0,1),l=v((o-.5)/.5,0,1),m=o<=.5?c.z+a(2.8,0,r):c.z;if(e.current){let d=e.current.cocMaterial;d.worldFocusDistance=Math.max(Math.abs(n.position.z-m),.6),d.worldFocusRange=o<=.5?a(2.4,2.6,r):a(2.6,3.6,l)}t.current&&(t.current.darkness=a(.3,.26,b(.58,.96,o)))}),null}function te(){let e=h(),t=h();return g(oe,{children:[i(Q,{}),i($,{}),i(ee,{dof:e,vignette:t}),i(G,{}),i(J,{}),g(P,{disableNormalPass:!0,multisampling:0,children:[i(S,{ref:e,worldFocusDistance:6.4,worldFocusRange:1.8,bokehScale:5.5,height:640}),i(L,{mipmapBlur:!0,luminanceThreshold:.95,luminanceSmoothing:.3,intensity:.55}),i(F,{opacity:.075,blendFunction:V.OVERLAY}),i(I,{ref:t,eskil:!1,offset:.3,darkness:.3})]})]})}B(document.getElementById(\"scene\")).render(i(O,{dpr:[1,1.4],gl:{antialias:!1,powerPreference:\"high-performance\"},camera:{fov:38,near:.35,far:200,position:[0,0,0]},children:i(te,{})}));\n"
+const DRIVER = "window.__eviiveStop&&window.__eviiveStop();let __eviiveDead=!1;window.__eviiveStop=function(){__eviiveDead=!0},(()=>{\"use strict\";const It=matchMedia(\"(prefers-reduced-motion: reduce)\").matches,g=(t,n,e)=>t<n?n:t>e?e:t,E=(t,n,e)=>t+(n-t)*e,V=(t,n,e)=>{const o=g((e-t)/(n-t),0,1);return o*o*(3-2*o)},kt=6.4,Dt=53.5,a=window.__eviiveScroll=window.__eviiveScroll||{p:0};a.mx=a.my=0,addEventListener(\"pointermove\",t=>{a.mx=t.clientX/__eviiveVP.w*2-1,a.my=1-t.clientY/__eviiveVP.h*2},{passive:!0});const Tt=document.getElementById(\"pin\"),T=document.getElementById(\"ui\"),H=document.getElementById(\"line2\"),q=document.getElementById(\"l1a\"),W=document.getElementById(\"l1b\"),m=document.getElementById(\"caption\"),Ht=document.getElementById(\"cue\"),vt=document.getElementById(\"hud\"),z=document.getElementById(\"odo\"),qt=[{key:\"tens\",mul:.1},{key:\"ones\",mul:1},{key:\"point\"},{key:\"tenths\",mul:10}],Y={},st={},O={};let it=102;for(const t of qt){if(t.key===\"point\"){const o=document.createElement(\"div\");o.className=\"odo-pt\",o.textContent=\".\",z.appendChild(o);continue}const n=document.createElement(\"div\");n.className=\"odo-col\";const e=document.createElement(\"div\");e.className=\"stack\";for(let o=0;o<=44;o++){const i=document.createElement(\"i\");i.textContent=String(o%10),e.appendChild(i)}n.appendChild(e),z.appendChild(n),Y[t.key]={st:e,col:n,mul:t.mul},O[t.key]=0}function ct(){Y.ones&&(it=Y.ones.col.getBoundingClientRect().height||it)}ct(),document.fonts&&document.fonts.ready&&document.fonts.ready.then(ct),addEventListener(\"resize\",ct,{passive:!0});const Wt={tens:[0,0,5],ones:[0,6,23],tenths:[0,14,35]};function Yt(t,n){const e=Wt[t];return n<=.5?E(e[0],e[1],n/.5):E(e[1],e[2],(n-.5)/.5)}function Ot(t){for(const n in Y){const{st:e,col:o}=Y[n],i=Yt(n,t);e.style.transform=`translateY(${(.275-i).toFixed(4)}em)`;const l=st[n]===void 0?i:st[n];st[n]=i;const s=Math.abs(i-l);O[n]=O[n]*.84+s*.16;const p=g(O[n]*30,0,1);o.style.setProperty(\"--eat\",(p*11.5).toFixed(2)+\"%\"),o.style.setProperty(\"--fade\",(2.4+p*11).toFixed(2)+\"%\");const h=g(O[n]*it*.3,0,9);e.style.filter=h>.3?`url(#mb-${n})`:\"none\";const r=document.getElementById(`fe-${n}`);if(r&&r.setAttribute(\"stdDeviation\",`0 ${h.toFixed(2)}`),n===\"tens\"){const f=V(.55,.78,t);o.style.opacity=f,o.style.width=(.6*f).toFixed(4)+\"em\"}}}let G=24;const C=()=>__eviiveVP.w/__eviiveVP.h<1.15||__eviiveVP.w<900;function Gt(){const t=x.getBoundingClientRect();G=Math.round(C()?t.left:__eviiveVP.w-t.right)}const Nt=22,wt=3,at=80,Xt=30,Ut=34,zt=10,Kt=17,Zt=32,jt=18,Jt=10,Be=[6,54],x=document.getElementById(\"rail\"),lt=[];for(let t=0;t<at;t++){const n=document.createElement(\"i\");x.appendChild(n),lt.push(n)}const bt=[{m:6,label:\"not aligned with prediction\"},{m:54,label:\"aligned with prediction\"}],Mt=bt.map(t=>{const n=document.createElement(\"i\");return n.className=\"mark\",n.innerHTML=`<b></b><span>${t.label}</span>`,x.appendChild(n),n}),K=document.getElementById(\"odounit\"),B=document.querySelector(\".readout\"),u={top:0,h:1,left:0,w:1},Z=[],j={w:-1,h:-1},Et=document.querySelector(\".readout .unit\");function Ct(t){const n=t.style.whiteSpace;t.style.whiteSpace=\"nowrap\";const e=document.createElement(\"span\");e.style.cssText=\"display:inline-block;width:0;height:0;vertical-align:baseline\",t.appendChild(e);const o=e.getBoundingClientRect().bottom-t.getBoundingClientRect().top;return e.remove(),t.style.whiteSpace=n,o}function Rt(t){const n=getComputedStyle(t),e=document.createElement(\"span\");e.style.cssText=`position:absolute;left:-9999px;top:0;visibility:hidden;display:block;white-space:nowrap;font-family:${n.fontFamily};font-size:${n.fontSize};font-weight:${n.fontWeight};letter-spacing:${n.letterSpacing};line-height:${n.lineHeight}`,e.textContent=\"x\",document.body.appendChild(e);const o=document.createElement(\"span\");o.style.cssText=\"display:inline-block;width:0;height:0;vertical-align:baseline\",e.appendChild(o);const i=e.getBoundingClientRect().bottom-o.getBoundingClientRect().bottom;return e.remove(),i}function J(){j.w=__eviiveVP.w,j.h=__eviiveVP.h,a.stacked=C();var t=document.querySelector(\".eviive-root\")||document.documentElement;t.classList.toggle(\"stacked\",a.stacked),Gt(),m.style.left=m.style.right=m.style.bottom=\"\",m.style.textAlign=m.style.maxWidth=\"\",B.style.top=B.style.bottom=\"\",x.style.top=x.style.bottom=\"\";const n=parseFloat(getComputedStyle(document.querySelector(\".eviive-root\")||document.documentElement).getPropertyValue(\"--nav-h\"))||0;a.orbY=.5+n/(2*__eviiveVP.h),a.orbX=.5,a.orbDia=0;const e=z.querySelectorAll(\".odo-col\"),o=e[e.length-1],i=o&&o.querySelector(\"i\");if(!i)return;const l=parseFloat(getComputedStyle(z).fontSize);K.style.transform=\"none\";const s=o.getBoundingClientRect().top+.2744*l+Ct(i),p=K.getBoundingClientRect().top+Ct(K);K.style.transform=`translateY(${(s-p).toFixed(2)}px)`;const h=x.getBoundingClientRect();if(u.top=h.top,u.h=h.height,u.left=h.left,u.w=h.width,C()){m.style.transform=\"none\",B.style.transform=\"none\";const L=parseFloat(getComputedStyle(document.documentElement).getPropertyValue(\"--pad-b\"))||96,_t=40,gt=32,xe=m.getBoundingClientRect().height,Ft=__eviiveVP.w>809;m.style.bottom=L+\"px\",Ft&&(m.style.left=\"auto\",m.style.right=G+\"px\",m.style.textAlign=\"right\",m.style.maxWidth=\"44%\");const Lt=Ft?L:L+xe+_t;B.style.top=\"auto\",B.style.bottom=Lt.toFixed(0)+\"px\";const ve=B.getBoundingClientRect().height;x.style.top=\"auto\",x.style.bottom=(Lt+ve+gt).toFixed(0)+\"px\";const U=x.getBoundingClientRect();u.top=U.top,u.h=U.height,u.left=U.left,u.w=U.width;const we=40,be=0,Me=.84,Ee=document.querySelector(\".headline\"),Ce=[q,W,H].map(xt=>xt.style.display);q.style.display=\"none\",W.style.display=\"\",H.style.display=\"\";const Re=Ee.getBoundingClientRect().bottom;[q,W,H].forEach((xt,Ae)=>{xt.style.display=Ce[Ae]});const Vt=Re+be,$t=U.top-we;a.orbY=(Vt+$t)/2/__eviiveVP.h;const Pe=__eviiveVP.w-2*G;a.orbDia=Math.max(Math.min(($t-Vt)*Me,Pe*.78),0);return}const r=x.getBoundingClientRect().bottom;m.style.transform=\"none\";const f=m.getBoundingClientRect().bottom-Rt(m);m.style.transform=`translateY(${(r-f).toFixed(2)}px)`,B.style.transform=\"none\";const $=Et.getBoundingClientRect().bottom-Rt(Et);B.style.transform=`translateY(${(r-$).toFixed(2)}px)`,Mt.forEach((L,_t)=>{const gt=L.style.display;L.style.display=\"block\",Z[_t]=L.lastElementChild.offsetWidth,L.style.display=gt});const R=document.querySelector(\".headline\"),w={right:R.offsetLeft+R.offsetWidth,bottom:R.offsetTop+R.offsetHeight},S=__eviiveVP.w-G-30,c=Math.max(Z[0]||0,Z[1]||0)||200,y=w.right+24,_=S-c-40,b=__eviiveVP.h/2/Math.tan(38*Math.PI/360)/6.4,P=__eviiveVP.w/2,M=(a.orbY||.5)*__eviiveVP.h,F=Math.max(0,M-w.bottom),A=P-(w.right-4),I=A>=0?Math.sqrt(A*A+F*F):F,D=S-c-P,St=Math.min(I,D);a._dbg={A:Math.round(A),dy:Math.round(F),orbCy:Math.round(M),hlB:Math.round(w.bottom),hlR:Math.round(w.right),capL:Math.round(I),capR:Math.round(D),natR:Math.round(b),orbY:+(a.orbY||0).toFixed(4)},a.orbX=.5,a.orbDia=St>=b?0:Math.max(St*2,80)}function Qt(t){u.top=x.offsetTop,u.h=x.offsetHeight,u.left=x.offsetLeft,u.w=x.offsetWidth;const n=C()?u.w:u.h,e=C()?__eviiveVP.w*.5-u.left:(a.orbY||.5)*__eviiveVP.h-u.top,i=Math.max(e,1)/Math.max(t,.05),l=a.p,s=__eviiveVP.h/2/Math.tan(38*Math.PI/360),p=__eviiveVP.w*(a.orbX||.5)+s/6.4,h=__eviiveVP.w-G-30,r=V(.56,.86,l),f=[1-r,r],$=[];bt.forEach((c,y)=>{const _=e+(c.m-t)*i,d=Mt[y],b=d.lastElementChild,P=Math.min(V(-60,20,_),1-V(n*.56,n*.78,_)),M=f[y]*P;if(d.style.display=M>.004?\"block\":\"none\",M<=.004)return;$.push({m:c.m,o:M});const F=Z[y]||1,I=30+Math.max((h-p-F)/2,40)*(.52+.48*Q(_,n)),D=C()?Zt+jt*Q(_,n):Math.max(I-Nt,24);C()?(d.style.transform=`translate3d(${_.toFixed(1)}px,0,0)`,d.firstElementChild.style.transform=`scaleY(${(D/220).toFixed(4)})`,b.style.transform=`translate3d(-50%,${-(D+Jt).toFixed(1)}px,0)`):(d.style.transform=`translate3d(0,${_.toFixed(1)}px,0)`,d.firstElementChild.style.transform=`scaleX(${(D/300).toFixed(4)})`,b.style.transform=`translate3d(${(-I).toFixed(1)}px,-50%,0)`),d.style.opacity=M.toFixed(3),b.style.filter=M>.995?\"none\":`blur(${((1-M)*20).toFixed(2)}px)`});const R=Math.min(Math.abs(l),Math.abs(l-.5),Math.abs(l-1))<.004;let w=0,S=0;for(;S<at;w+=wt){const c=e+(w-t)*i;if(c>n+12)break;if(c<-12)continue;const y=$.find(I=>Math.abs(I.m-w)<wt*.5),_=y?y.o:0;if(_>.996)continue;const d=lt[S++];d._on!==1&&(d.style.display=\"block\",d._on=1);const b=Math.round(c*10)/10,P=Math.round(C()?zt+Kt*Q(c,n):Xt+Ut*Q(c,n));(d._y!==b||d._w!==P)&&(d.style.transform=C()?`translate3d(${b}px,0,0) scaleY(${(P/64).toFixed(4)})`:`translate3d(0,${b}px,0) scaleX(${(P/64).toFixed(4)})`,d._y=b,d._w=P);const F=(R?c<-2||c>n+2?0:1:c<0?Math.max(0,1+c/12):c>n?Math.max(0,1-(c-n)/12):1)*(1-_),A=Math.round(F*50)/50;d._e!==A&&(d.style.opacity=A,d._e=A)}for(let c=S;c<at;c++){const y=lt[c];y._on!==0&&(y.style.display=\"none\",y._on=0)}}const te=1.9;function Q(t,n){const e=Math.min(Math.abs(t/n-.5)*2,1),o=Math.cos(e*Math.PI/2);return Math.pow(o*o,te)}function ee(t){const n=t.textContent.split(/(\\s+)/);t.textContent=\"\";const e=[];for(const o of n){if(!o.trim()&&o.includes(`\n`)){t.appendChild(document.createElement(\"br\"));continue}const i=document.createElement(\"span\");i.className=\"wd\";const l=document.createElement(\"b\");l.textContent=o,i.appendChild(l),t.appendChild(i),o.trim()&&e.push(l)}return e}const ne=new Map([q,W,H].map(t=>[t,ee(t)])),tt=850,rt=100,oe=240,se=10,Pt=10,dt=fe(.44,0,.56,1),pt=[{els:[q],inAt:()=>v<=.5,armAt:()=>v===.5,armExact:!0,exitY:-1,canReverse:!0},{els:[W,H],inAt:()=>v>=1,exitY:-1,exitReverse:!0}],mt=380,ut=.45;for(const t of pt)t.words=t.els.reduce((n,e)=>n.concat(ne.get(e)),[]),t.span=tt+rt*Math.max(t.words.length-1,0),t.maxD0=rt*Math.max(t.words.length-1,0),t.xspan=mt+t.maxD0*ut,t.t=0,t.x=0;function et(){for(const t of pt){const n=t.els.map(l=>l.style.display);t.els.forEach(l=>{l.style.display=\"\"});let e=null,o=-1,i=0;for(const l of t.words){const s=Math.round(l.getBoundingClientRect().top);(e===null||Math.abs(s-e)>4)&&(o++,e=s,i=0),l._d0=o*oe+i*rt,i++}t.maxD0=Math.max(0,...t.words.map(l=>l._d0)),t.span=tt+t.maxD0,t.xspan=mt+t.maxD0*ut,t.els.forEach((l,s)=>{l.style.display=n[s]})}}let ht=-1,ft=0,N=16,nt=1,yt=0;function ie(t,n){N=ht<0?16:Math.min(n-ht,64),ht=n,v!==yt&&(nt=v>yt?1:-1,yt=v);for(const e of pt){const o=e.inAt(),i=e.armAt?e.armAt():o,l=e.x>.02;o&&!e.was&&(e.x=0),i&&!e.wasArmed&&(e.revEntry=l,e.t=0,e.x=0),e.was=o,e.wasArmed=i,o?(e.x=g(e.x-N/e.xspan,0,1),i&&(e.t=g(e.t+N/e.span,0,1))):(e.x=g(e.x+N/e.xspan,0,1),e.x>=1&&(e.t=0));for(const r of e.els)r._clr!==1&&(r.style.transform=\"none\",r.style.opacity=\"\",r.style.filter=\"none\",r._clr=1);const s=e.x>1e-4,p=s?e.x<.999:e.t>5e-4;for(const r of e.els){const f=p?\"\":\"none\";r._d!==f&&(r.style.display=f,r._d=f)}if(!p)continue;const h=s?e.x*e.xspan:e.t*e.span;for(let r=0;r<e.words.length;r++){const f=e.words[r],$=f._d0||0,R=nt<0?e.maxD0-$:$,w=s?1-dt(g((h-R*ut)/mt,0,1)):dt(g((h-R)/tt,0,1)),S=s?-nt:nt,c=f,y=Math.round(w*100)/100;c._o!==y&&(c.style.opacity=y,c._o=y);const _=Math.round((1-w)*se*S*4)/4;c._y!==_&&(c.style.transform=Math.abs(_)<.2?\"none\":`translate3d(0,${_}px,0)`,c._y=_);const d=Math.round((1-w)*Pt*4)/4;c._b!==d&&(c.style.filter=d<.2?\"none\":`blur(${d}px)`,c._b=d)}}}const ot=(t,n,e)=>`rgba(${Math.round(E(t[0],n[0],e))},${Math.round(E(t[1],n[1],e))},${Math.round(E(t[2],n[2],e))},${E(t[3],n[3],e).toFixed(3)})`,ce=[255,255,255,.96],ae=[11,32,40,.94],le=[248,246,242,.42],re=[11,32,40,.52],de=[248,246,242,.22],pe=[11,32,40,.24],me=[103,234,255,1],ue=[6,132,177,1];function he(t){T.style.setProperty(\"--ink\",ot(ce,ae,t)),T.style.setProperty(\"--soft\",ot(le,re,t)),T.style.setProperty(\"--ghost\",ot(de,pe,t)),T.style.setProperty(\"--accent\",ot(me,ue,t))}function fe(t,n,e,o){const i=s=>{const p=1-s;return 3*p*p*s*t+3*p*s*s*e+s*s*s},l=s=>{const p=1-s;return 3*p*p*s*n+3*p*s*s*o+s*s*s};return s=>{if(s<=0)return 0;if(s>=1)return 1;let p=0,h=1,r=0;for(let f=0;f<24;f++)r=(p+h)/2,i(r)<s?p=r:h=r;return l((p+h)/2)}}const ye=t=>{if(t>=1)return 1;const n=6*t;return 1-Math.exp(-n)*(1+n)},_e=900;let v=0,k=0,X=-1e9;const ge=.75;function At(){if(window.__eviiveDriving||window.__eviiveOwned)return;const t=Tt.getBoundingClientRect(),n=t.height-__eviiveVP.h;if(t.top>0){const i=g(1-t.top/__eviiveVP.h,0,1);v=k=a.p=g(i/ge,0,1)*.5,X=-1e9;return}const e=n>0?g(-t.top/n,0,1):0,o=.5+Math.round(e)/2;o!==v&&(k=a.p,v=o,X=performance.now())}J(),et(),document.fonts&&document.fonts.ready&&document.fonts.ready.then(()=>{J(),et()}),addEventListener(\"resize\",()=>{J(),et()}),addEventListener(\"scroll\",At,{passive:!0}),At();function Bt(t){if(__eviiveDead)return;a.p=It?v:k+(v-k)*ye(g((t-X)/_e,0,1));const n=a.p;try{(j.w!==__eviiveVP.w||j.h!==__eviiveVP.h)&&(J(),et()),Ot(n),Qt(n<=.5?E(0,6,n/.5):Math.exp(E(Math.log(6),Math.log(54),(n-.5)/.5))),ie(n,t),he(V(.58,.96,n))}catch(o){window.__eviiveErr||(window.__eviiveErr=o.stack||String(o),console.error(\"[eviive] frame:\",o))}T.style.opacity=V(.02,.14,n),ft=g(ft+(v>=1?1:-1)*N/tt,0,1);const e=dt(ft);m.style.opacity=(e*.9).toFixed(3),m.style.filter=e>.995?\"none\":`blur(${((1-e)*Pt).toFixed(2)}px)`,Ht.style.opacity=1-V(.02,.18,n),vt.classList.contains(\"on\")&&(vt.textContent=`p       ${n.toFixed(3)}\ncamZ    ${(-47.1*n).toFixed(2)}\nmonths  ${E(kt,Dt,n).toFixed(1)}`),requestAnimationFrame(Bt)}requestAnimationFrame(Bt),window.__eviive={to(t){return k=a.p,v=t,X=performance.now(),t},seek(t){return v=k=a.p=g(t,0,1),X=-1e9,a.p},get progress(){return a.p},states:{a:0,b:1}}})();\n"
+const SCENE = "import{useRef as h,useMemo as w}from\"https://esm.sh/react@19.2.8\";import{createRoot as B}from\"https://esm.sh/react-dom@19.2.8/client?deps=react@19.2.8,react-dom@19.2.8\";import{Canvas as O,useFrame as f,useThree as k}from\"https://esm.sh/@react-three/fiber@9.7.0?deps=react@19.2.8,react-dom@19.2.8,three@0.185.1\";import{EffectComposer as P,DepthOfField as S,Bloom as L,Noise as F,Vignette as I}from\"https://esm.sh/@react-three/postprocessing@3.0.4?deps=react@19.2.8,react-dom@19.2.8,three@0.185.1,postprocessing@6.39.4\";import{BlendFunction as V}from\"https://esm.sh/postprocessing@6.39.4?deps=three@0.185.1\";import*as u from\"https://esm.sh/three@0.185.1\";import{Fragment as oe,jsx as i,jsxs as g}from\"https://esm.sh/react@19.2.8/jsx-runtime\";var y=-6.4,A=-53.5,H=6.4,x=A+H,v=(e,t,n)=>e<t?t:e>n?n:e,a=(e,t,n)=>e+(t-e)*n,b=(e,t,n)=>{let o=v((n-e)/(t-e),0,1);return o*o*(3-2*o)},s=window.__eviiveScroll=window.__eviiveScroll||{p:0};function G(){let e=h(),t=h(),n=w(()=>({uLift:{value:0},uT:{value:0}}),[]);return f(({camera:o,clock:c})=>{e.current&&e.current.position.copy(o.position);let r=t.current&&t.current.uniforms;r&&(r.uLift.value=b(.58,.96,s.p),r.uT.value=c.elapsedTime)}),g(\"mesh\",{ref:e,scale:140,renderOrder:-1,children:[i(\"sphereGeometry\",{args:[1,48,32]}),i(\"shaderMaterial\",{ref:t,side:u.BackSide,depthWrite:!1,uniforms:n,vertexShader:`\n          varying vec3 vP;\n          void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }\n        `,fragmentShader:`\n          precision highp float;\n          varying vec3 vP;\n          uniform float uLift;\n          uniform float uT;\n          float hash(vec2 p){\n            p = fract(p * vec2(443.897, 441.423));\n            p += dot(p, p + 19.19);\n            return fract((p.x + p.y) * p.x);\n          }\n          vec3 s2l(vec3 c){\n            return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(vec3(0.04045), c));\n          }\n          void main(){\n            vec3 d = normalize(vP);\n            vec2 q = d.xy;\n            float t1 = uT * 0.047, t2 = uT * 0.034;\n            vec2 flow = vec2(\n              sin(q.y * 1.70 + t1) + 0.50 * sin(q.y * 3.05 - t2 * 1.7),\n              cos(q.x * 1.45 - t2) + 0.50 * cos(q.x * 2.60 + t1 * 1.3)\n            ) * 0.185;\n            vec2 ctr = vec2(sin(uT * 0.039) * 0.17, cos(uT * 0.029) * 0.13);\n            float rad = clamp(length(q + flow - ctr) * 1.12, 0.0, 1.0);\n            vec3 navy     = s2l(vec3(0.008, 0.173, 0.231));  \n            vec3 navyDeep = s2l(vec3(0.004, 0.110, 0.153));   \n            vec3 dark = mix(navy, navyDeep, smoothstep(0.15, 1.0, rad));\n            vec3 liteC = s2l(vec3(0.980, 0.995, 1.000));      \n            vec3 liteE = s2l(vec3(0.741, 0.869, 0.929));      \n            vec3 lite = mix(liteC, liteE, smoothstep(0.10, 1.0, rad));\n            vec3 c = mix(dark, lite, uLift);\n            c += (hash(gl_FragCoord.xy) - 0.5) * (1.5/255.0);   \n            gl_FragColor = vec4(c, 1.0);\n          }\n        `})]})}var W=`\n  varying vec3 vN; varying vec3 vV; varying vec3 vP;\n  uniform float uT; uniform float uWobAmp; uniform float uOrganic; uniform float uChurn; uniform vec2 uPtr;\n  float h31(vec3 p){ p=fract(p*0.3183099+vec3(.11,.17,.13)); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }\n  float n3(vec3 x){ vec3 i=floor(x),f=fract(x); f=f*f*f*(f*(f*6.0-15.0)+10.0);\n    return mix(mix(mix(h31(i),h31(i+vec3(1,0,0)),f.x),mix(h31(i+vec3(0,1,0)),h31(i+vec3(1,1,0)),f.x),f.y),\n               mix(mix(h31(i+vec3(0,0,1)),h31(i+vec3(1,0,1)),f.x),mix(h31(i+vec3(0,1,1)),h31(i+vec3(1,1,1)),f.x),f.y),f.z);}\n  float dispAt(vec3 pn){\n    float nz = n3(pn * 1.35 + vec3(uPtr * 0.34, uT * 0.19)) - 0.5;\n    float lobes = sin(pn.y * 1.7 + uT * 0.72 + uPtr.y * 0.85)\n                + sin(pn.x * 1.3 - uT * 0.55 + uPtr.x * 0.85);\n    return nz * 1.6 * uOrganic + lobes * 0.5 * uWobAmp;\n  }\n  void main(){\n    vP = position;\n    vec3 pn = normalize(position);\n    float d0 = dispAt(pn);\n    vec3 pos = pn * (1.0 + d0);\n    vec3 up = abs(pn.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);\n    vec3 t1 = normalize(cross(up, pn));\n    vec3 t2 = cross(pn, t1);\n    const float E = 0.045;\n    vec3 pa = normalize(pn + t1 * E), pb = normalize(pn + t2 * E);\n    vec3 va = pa * (1.0 + dispAt(pa)) - pos;\n    vec3 vb = pb * (1.0 + dispAt(pb)) - pos;\n    vec3 bumped = normalize(cross(va, vb));\n    bumped *= sign(dot(bumped, pn));\n    vN = normalize(normalMatrix * bumped);\n    vec4 mv = modelViewMatrix * vec4(pos, 1.0);\n    vV = -mv.xyz;\n    gl_Position = projectionMatrix * mv;\n  }`,q=`\n  precision highp float;\n  varying vec3 vN; varying vec3 vV; varying vec3 vP;\n  uniform float uT; uniform float uAlpha; uniform vec2 uPtr;\n  float ndv(){ return clamp(dot(normalize(vN), normalize(vV)), 0.0, 1.0); }\n  float fres(float k){ return pow(clamp(1.0 - ndv(), 0.0, 1.0), k); }\n  float band(float inner, float outer){\n    float d = ndv();\n    return smoothstep(outer, inner, d) * smoothstep(0.0, 0.10, d);\n  }\n  float nucleus(){\n    vec3 nn = normalize(vN);\n    vec2 off = vec2(sin(uT * 0.13) * 0.12, cos(uT * 0.105) * 0.09);\n    float d = length(nn.xy - off);\n    float k = 1.0 - smoothstep(0.02, 0.62, d);\n    return k * k * k;                  \n  }\n  const vec3 CORE = vec3(0.62,0.875,0.965);   \n  const vec3 MIDB = vec3(0.42,0.865,0.985);\n  const vec3 EDGE = vec3(0.09,0.42,0.60);\n`,Y=q+`\n  uniform float uMorph;\n  void main(){\n    float m = uMorph;\n    vec3  N = normalize(vN), V = normalize(vV);\n    vec2  bgCtr = vec2(sin(uT * 0.039) * 0.17, cos(uT * 0.029) * 0.13);\n    vec3  L = normalize(vec3(bgCtr.x * 3.6 - 0.22, bgCtr.y * 3.6 + 0.76, 0.52));\n    float thick = pow(ndv(), 0.70);\n    float nuc = nucleus();\n    float rimA = dot(N, L) * 0.5 + 0.5;\n    float rimW = smoothstep(0.02, 0.98, rimA);\n    vec3 pDeep  = mix(vec3(0.22,0.26,0.30), EDGE, m);\n    vec3 pMid   = mix(vec3(0.30,0.36,0.41), MIDB, m);\n    vec3 pLight = mix(vec3(0.86,0.91,0.94), CORE, m);\n    float tilt = sin(uT * 0.115) * 0.55 * m;\n    float roll = cos(uT * 0.083) * 0.10 * m;\n    float g = smoothstep(-0.85 + roll, 0.75 + roll, N.y + N.x * tilt);\n    g = mix(fres(2.0), g, m);\n    vec3 base = mix(pMid, pLight, g);\n    base = mix(base, mix(pMid, pDeep, 0.55), (1.0 - thick) * mix(0.06, 0.22, m));\n    vec3  Ni = normalize(N + L * 0.44 + vec3(0.0, -0.15, 0.0));\n    float shell = smoothstep(0.05, 0.95, dot(Ni, L)) * thick;\n    base = mix(base, pLight, shell * 0.30 * m);\n    float bandDrift = 0.10 + sin(uT * 0.094) * 0.035;\n    base = mix(base, pDeep,\n               band(bandDrift, bandDrift + 0.52) * 0.62 * m * mix(0.22, 1.0, 1.0 - rimW));\n    base = mix(base, pDeep * 0.72, nuc * 0.62);\n    vec3  Hv = normalize(L + V);\n    float trim = (1.25 + sin(uT * 0.137) * 0.16) * m;\n    vec3  c = base\n            + vec3(0.80,0.95,1.00) * fres(3.0) * trim * mix(0.62, 1.0, rimW)\n            + vec3(0.86,0.96,1.00) * pow(max(dot(N, Hv), 0.0),  5.0) * 0.14 * thick * m\n            + vec3(1.00,1.00,1.00) * pow(max(dot(N, Hv), 0.0), 44.0) * 0.20 * m;\n    float aThin  = mix(0.14, 0.60, fres(1.7));\n    float aGlass = min(1.0, mix(1.0, 0.50, g) + fres(2.2) * 0.60);\n    float a = mix(aThin, aGlass, m) * (1.0 + nuc * mix(0.60, 0.32, m));\n    gl_FragColor = vec4(c, min(a, 1.0) * uAlpha);\n  }`,T=.26,Z=1,U=e=>e*e*(3-2*e),j=T/6.4,K=Z/6.4,R=14,X=e=>e<=.5?a(R,0,e/.5):a(0,x,(e-.5)/.5);function M(e){if(e<=.5)return{z:y,r:T,m:0};let t=v((e-.5)/.5,0,1),n=t+.08*Math.sin(Math.PI*t),o=a(y,A,n),c=Math.abs(a(0,x,t)-o);return{z:o,r:c*a(j,K,U(t)),m:b(.1,.82,t)}}function J(){let e=h(),t=h(),n=w(()=>({uT:{value:0},uAlpha:{value:1},uMorph:{value:0},uWobAmp:{value:.012},uOrganic:{value:.016},uChurn:{value:0},uPtr:{value:new u.Vector2}}),[]),o=h({x:0,y:0});return f(({clock:c})=>{let r=t.current&&t.current.uniforms;if(!r||!e.current)return;let l=M(s.p);o.current.x+=((s.mx||0)-o.current.x)*.035,o.current.y+=((s.my||0)-o.current.y)*.035,r.uPtr.value.set(o.current.x,o.current.y),r.uT.value=c.elapsedTime,r.uMorph.value=l.m,r.uWobAmp.value=a(.1,.085,l.m),r.uOrganic.value=a(.095,.105,l.m),r.uChurn.value=0,e.current.position.z=l.z;let m=!!s.stacked,d=Math.tan(38*Math.PI/360),N=__eviiveVP.h/2/d,E=Math.abs(X(s.p)-l.z),z=(.5-(s.orbY||(m?.355:.5)))*2*d;e.current.position.y=z*E;let C=s.orbX||.5;e.current.position.x=m?0:(C-.5)*2*d*(__eviiveVP.w/__eviiveVP.h)*E;let D=1+Math.sin(c.elapsedTime*.62)*a(.062,.024,l.m),p=s.orbDia?s.orbDia*6.4/(2*N):null,_=m?p!==null?p:.52:p!==null?Math.min(p,1):1;e.current.scale.setScalar(s.p<.015?0:l.r*D*_)}),g(\"mesh\",{ref:e,position:[0,0,y],scale:T,children:[i(\"sphereGeometry\",{args:[1,112,80]}),i(\"shaderMaterial\",{ref:t,uniforms:n,vertexShader:W,fragmentShader:Y,transparent:!0})]})}function Q(){let e=h(),t=w(()=>new u.Color,[]);return f(()=>{let n=b(.58,.96,s.p);t.setRGB(a(.02,.93,n),a(.105,.96,n),a(.145,.962,n)),e.current.color.copy(t)}),i(\"fog\",{ref:e,attach:\"fog\",args:[\"#0a2732\",14,62]})}function $(){let e=k();return f(()=>{window.__three=e}),null}function ee({dof:e,vignette:t}){let{camera:n}=k();return f(()=>{let o=s.p;n.position.y=0,n.position.z=o<=.5?a(R,0,o/.5):a(0,x,(o-.5)/.5),n.updateMatrixWorld();let c=M(o),r=v(o/.5,0,1),l=v((o-.5)/.5,0,1),m=o<=.5?c.z+a(2.8,0,r):c.z;if(e.current){let d=e.current.cocMaterial;d.worldFocusDistance=Math.max(Math.abs(n.position.z-m),.6),d.worldFocusRange=o<=.5?a(2.4,2.6,r):a(2.6,3.6,l)}t.current&&(t.current.darkness=a(.3,.26,b(.58,.96,o)))}),null}function te(){let e=h(),t=h();return g(oe,{children:[i(Q,{}),i($,{}),i(ee,{dof:e,vignette:t}),i(G,{}),i(J,{}),g(P,{disableNormalPass:!0,multisampling:0,children:[i(S,{ref:e,worldFocusDistance:6.4,worldFocusRange:1.8,bokehScale:5.5,height:640}),i(L,{mipmapBlur:!0,luminanceThreshold:.95,luminanceSmoothing:.3,intensity:.55}),i(F,{opacity:.075,blendFunction:V.OVERLAY}),i(I,{ref:t,eskil:!1,offset:.3,darkness:.3})]})]})}B(document.getElementById(\"scene\")).render(i(O,{dpr:[1,1.4],gl:{antialias:!1,powerPreference:\"high-performance\"},camera:{fov:38,near:.35,far:200,position:[0,0,0]},children:i(te,{})}));\n"
 const BREAKPOINTS = [809, 1199]
 
 /** Mount into `host`. Returns a teardown function. */
@@ -84,223 +84,251 @@ export default function mount(host) {
   document.body.appendChild(driverEl)
 
   const section = host.parentElement
+
   /* DISCRETE SCROLL CONTROLLER.
-     The section behaves as two deliberate steps rather than a scrollable
-     region: one gesture from the previous section lands on 6.4 months, one more
-     goes to EVIIVE, and only when that transition has actually finished does
-     ordinary scrolling resume. During a transition every input is swallowed —
-     the animation is not something the reader can outrun.
+     The section is two deliberate steps, not a scrollable region. The reader
+     watches it arrive under ordinary scrolling; one flick brings it home and
+     plays the 6.4-month reveal; one more goes to EVIIVE; and only once that has
+     actually landed does the page scroll on.
 
-     Input is only ever taken for the ~620ms of a glide, plus one deliberate
-     hold: at EVIIVE the reader waits for the transition before continuing to the
-     next section. Scrolling back is never blocked. A watchdog releases the lock
-     if anything fails, so the worst case is ordinary scrolling.
+     ONE PHYSICAL FLICK MUST BE ONE STEP, and that is the hard part. A trackpad
+     flick is 30-60 wheel events over about a second: a short burst from the
+     fingers followed by a long momentum tail the OS synthesises, and the
+     platform exposes no way to tell them apart (w3c/pointerevents#553, open
+     since 2021). Any cooldown short enough to feel responsive is shorter than
+     that tail, so its leftovers fire a second step - which is why one scroll
+     used to carry the reader past 6.4 months and straight into EVIIVE.
 
-     A wheel gesture is dozens of events. Handling each one would fire every
-     step at once, so after acting we swallow the rest of the burst until the
-     reader has been still, bounded by COOL_MAX. */
-  const STEP_MS  = 620          // spring is home well before this
-  /* One flick must count as ONE gesture, without the cure being worse than the
-     disease. Restarting a 400ms timer on every swallowed event meant a trackpad
-     burst - which keeps firing for a second or more - held input for the whole
-     tail plus another 400ms. That is the "even more stuck" feeling.
-     The window is now a DEADLINE with a ceiling: it always lasts at least
-     COOL_MIN so a burst cannot fire twice, extends only briefly past the last
-     event, and can never run longer than COOL_MAX from the gesture itself. */
-  const COOL_TAIL = 140         // grace after the last event of a burst
-  const COOL_MIN  = 420         // a burst can never fire two steps
-  const COOL_MAX  = 850         // hard ceiling, whatever momentum does
-  const GUARD_MS = 6000         // watchdog: never stay locked forever
+     So a gesture ends with SILENCE, not with a timer. An event opens a new
+     gesture only after GESTURE_GAP of quiet, and the clock advances on every
+     event including the ones we swallow - a tail that runs through an entire
+     animation is still the same gesture and cannot re-arm. The decision is
+     taken once, on a gesture's first event, from where the section is at that
+     instant. A burst that carries the section into view therefore never also
+     captures it: that takes a second, separate flick, which is exactly how it
+     reads to the hand. */
+  const GESTURE_GAP = 140
+  const TOLERANCE   = 24        // ignore grazes and the dribble at a tail's end
 
-  /* A CRITICALLY DAMPED SPRING THAT INHERITS THE READER'S SPEED.
-     Starting from rest is what made this read as two motions: the page scrolled,
-     stopped, then a separate animation began. Continuity is not a matter of
-     choosing a nicer curve - the arriving motion has to LEAVE at the speed the
-     page was already travelling.
-     Critically damped, general initial velocity:
-         x(t) = 1 - e^(-wt) * (1 + (w - v0) t)
-     v0 = 0 collapses to the from-rest form; v0 = w leaves at exactly the speed
-     the spring would have reached anyway, so the hand-off is invisible. Clamped
-     to w, beyond which it would overshoot. */
-  const OMEGA = 8               // spring stiffness; higher = tighter arrival
-  const spring = (t, v0) => {
-    const w = OMEGA * t
-    return 1 - Math.exp(-w) * (1 + (OMEGA - v0) * t)
-  }
+  /* How much of the section must be on screen before a flick belongs to it.
+     Positional, and deliberately NOT predicted from scroll velocity: a
+     prediction makes the same gesture behave differently depending on how hard
+     it was thrown, which is the definition of unpredictable. */
+  const ARM_IN = 0.25
+
+  /* Duration scales with distance - the same curve over 20vh and over 75vh are
+     not the same motion - and both ends stay inside the 100-500ms band past
+     which motion reads as a drag rather than as travel. */
+  const GLIDE_MIN = 340, GLIDE_MAX = 560
+  const GUARD_MS  = 6000
+
+  /* Ease-out, fixed. An entrance wants a fast start and a soft landing so the
+     eye can follow it to rest; ease-in on an entrance reads as unresponsive.
+     This is easeOutQuint, which leaves harder than the usual (0.4, 0, 0.2, 1)
+     and settles later - "snappy but arriving elegantly", as a number.
+     An earlier version seeded a spring with the gesture's own velocity. Springs
+     belong to motion a finger is still tracking; for a discrete step they only
+     make the identical flick feel different every time, and a spring never
+     actually arrives, so anything waiting on arrival waits forever. */
+  const ease = (t) => 1 - Math.pow(1 - t, 5)
 
   let idx = null                // 0 = 6.4 months, 1 = EVIIVE, null = not engaged
-  let locked = false            // transition in flight: swallow everything
-  let raf = 0, guardT = 0, touchY = 0
-  /* Recent scroll speed in px/ms, so a capture can continue the reader's motion
-     instead of restarting it. Smoothed - a single frame is noisy. */
-  let vel = 0, lastY = scrollY, lastT = performance.now()
-  const sampleVel = () => {
-    const now = performance.now()
-    const dt = now - lastT
-    if (dt <= 0) return
-    vel = vel * 0.6 + ((scrollY - lastY) / dt) * 0.4
-    lastY = scrollY
-    lastT = now
-  }
+  let busy = false              // a step is in flight, page AND scene
+  let raf = 0, pollRaf = 0, guardT = 0
+  let lastInputAt = 0, armed = false, accum = 0, touchY = 0, touchAcc = 0
+
+  const api      = () => window.__eviive || null
+  const progress = () => ((window.__eviiveScroll || {}).p) || 0
+  const at       = (v) => Math.abs(progress() - v) < 0.004
 
   const states = () => {
-    const top = pinEl.getBoundingClientRect().top + scrollY
+    const top = Math.round(pinEl.getBoundingClientRect().top + scrollY)
     return [top, top + innerHeight]
   }
-  const progress = () => ((window.__eviiveScroll || {}).p) || 0
-  const settled  = () => progress() >= 0.995
-  /* How far the section must have arrived before a gesture belongs to it.
-     At 1 it captured the moment its first pixel appeared, which made the
-     previous section feel skipped: you would still be reading Our Platform,
-     scroll once, and be pulled straight in. At 0.5 the section has to reach the
-     middle of the screen first — until then scrolling is ordinary, and the
-     hand-off reads as a decision rather than an ambush. Applied symmetrically
-     so coming back up behaves the same way. */
-  /* How much of the viewport the section must already fill before a gesture
-     belongs to it. Named the way it is read on screen: 0.8 means "wait until the
-     section is 80% in".
-     The previous constant was the inverse - a threshold on the section's TOP
-     edge - so 0.85 meant capturing when barely 15% of it was showing, the
-     grabbiest possible setting. When the first scroll felt wasted I moved that
-     number up, which made it grab even earlier rather than later.
-     At 0.8 the reader scrolls out of Our Platform normally and the section is
-     nearly filling the screen before one gesture completes the arrival, so the
-     glide is short and reads as settling rather than being yanked. */
-  const CATCH_WHEN_IN = 0.8
 
   const zone = () => {
     const r = pinEl.getBoundingClientRect()
-    if (r.top <= 0 && r.bottom >= innerHeight) return "inside"
-    /* Predictive, not positional. Waiting for the section to actually reach
-       CATCH_WHEN_IN meant the reader had already come to a stop before anything
-       took over — the stop is what read as two separate movements. If the speed
-       they are already travelling at would carry it past that mark shortly, the
-       gesture is ours now and the glide continues what their hand started. */
-    const inNow = (innerHeight - r.top) / innerHeight
-    const inSoon = inNow + (vel * 180) / innerHeight
-    if (r.top > 0 && Math.max(inNow, inSoon) >= CATCH_WHEN_IN) return "approach"
-    if (r.bottom < innerHeight && r.bottom > innerHeight * CATCH_WHEN_IN) return "leaving"
+    if (r.top <= 1 && r.bottom >= innerHeight - 1) return "inside"
+    if (r.top > 0 && (innerHeight - r.top) / innerHeight >= ARM_IN) return "approach"
+    if (r.bottom < innerHeight && r.bottom / innerHeight >= ARM_IN) return "leaving"
     return "away"
   }
 
-  const unlock = () => {
-    locked = false
+  const release = () => {
+    busy = false
     window.__eviiveDriving = false
     clearTimeout(guardT)
+    if (pollRaf) { cancelAnimationFrame(pollRaf); pollRaf = 0 }
   }
 
-  const glideTo = (y) => {
+  /* Hold `busy` until the SCENE has landed too, not merely the page. Releasing
+     on the page alone let the tail of one flick arrive while the odometer was
+     still counting, and that fired the next step. */
+  const holdUntil = (done) => {
+    const tick = () => {
+      if (done()) { pollRaf = 0; release(); return }
+      pollRaf = requestAnimationFrame(tick)
+    }
+    pollRaf = requestAnimationFrame(tick)
+  }
+
+  const glide = (y, then) => {
     const from = scrollY
     const dist = y - from
-    // the reader's current speed, expressed in the spring's own units
-    const v0 = dist !== 0
-      ? Math.max(0, Math.min((vel * STEP_MS) / dist, OMEGA))
-      : 0
+    if (Math.abs(dist) < 2) { scrollTo(0, y); then(); return }
+    const ms = Math.min(GLIDE_MAX,
+                Math.max(GLIDE_MIN, GLIDE_MIN + (Math.abs(dist) / innerHeight) * 280))
     const t0 = performance.now()
-    locked = true
-    window.__eviiveDriving = true      // the quantiser must not fight us
-    clearTimeout(guardT)
-    guardT = setTimeout(unlock, GUARD_MS)          // never trap the reader
     if (raf) cancelAnimationFrame(raf)
     const step = (now) => {
-      const k = Math.min((now - t0) / STEP_MS, 1)
+      const k = (now - t0) / ms
       if (k < 1) {
-        scrollTo(0, from + dist * spring(k, v0))
+        /* Integer pixels. A fractional scroll position resamples the sticky
+           element every frame, and that shimmer is what reads as jitter. */
+        scrollTo(0, Math.round(from + dist * ease(k)))
         raf = requestAnimationFrame(step)
         return
       }
-      scrollTo(0, y)                 // asymptotic curve: land it exactly
-      window.__eviiveDriving = false
+      scrollTo(0, y)                              // land it exactly, once
       raf = 0
-      unlock()
+      then()
     }
     raf = requestAnimationFrame(step)
   }
 
-  const goto = (i) => {
+  /* Step to a state. The two steps are shaped differently on purpose.
+     Coming IN, the page travels a visible distance and the scene must not start
+     until it has arrived - that is the whole of "only animate once the section
+     fills the viewport", and it also keeps scrollTo and the WebGL frame off each
+     other's backs, since both run on the main thread.
+     Once pinned, the page motion is invisible: the section is stuck to the
+     viewport and only the scene changes. There the two run together, because
+     sequencing them would just be half a second of nothing. */
+  const engage = (i, sequenced) => {
     idx = i
-    /* Start the scene on THIS frame. Left to itself the driver infers the state
-       from scroll position, which the spring only reaches half way through the
-       glide — so the page moved first and the animation joined a beat later,
-       reading as a stall. */
-    const api = window.__eviive
-    if (api && api.to) api.to(i === 0 ? 0.5 : 1)
-    glideTo(states()[i])
-  }
-
-  let coolUntil = 0
-  let coolFrom = 0
-  const cooling = () => performance.now() < coolUntil
-  const cool = (fresh) => {
-    const now = performance.now()
-    if (fresh || !cooling()) coolFrom = now
-    coolUntil = Math.min(
-      Math.max(now + COOL_TAIL, coolFrom + COOL_MIN),
-      coolFrom + COOL_MAX
-    )
+    busy = true
+    window.__eviiveDriving = true
+    clearTimeout(guardT)
+    guardT = setTimeout(release, GUARD_MS)        // never trap the reader
+    const goal = i === 0 ? 0.5 : 1
+    const play = () => {
+      const a = api()
+      if (!a || !a.to) return false
+      a.to(goal)
+      return true
+    }
+    if (!sequenced) play()
+    glide(states()[i], () => {
+      const started = sequenced ? play() : true
+      if (!started) { release(); return }        // no scene: do not hang on it
+      holdUntil(() => at(goal))
+    })
   }
 
   /** @returns true if the gesture was consumed */
   const onStep = (dir) => {
     const z = zone()
     if (z === "away") { idx = null; return false }
-
-    if (locked) { cool(false); return true }     // nothing gets through
-    if (cooling()) { cool(false); return true }   // still the same gesture
-
     if (z === "approach") {
-      if (dir > 0) { cool(true); goto(0); return true }
-      return false                                  // going up, let them leave
+      if (dir < 0) return false                   // heading away, let them go
+      engage(0, true)                             // glide in, THEN reveal
+      return true
     }
     if (z === "leaving") {
-      if (dir < 0) { cool(true); goto(1); return true }   // re-enter from below
-      return false
+      if (dir > 0) return false
+      engage(1, true)                             // re-entering from below
+      return true
     }
-    // inside
     if (idx === null) idx = progress() >= 0.75 ? 1 : 0
     if (dir > 0) {
-      if (idx === 0) { cool(true); goto(1); return true }
-      /* THE ONLY WAIT. Once at EVIIVE the reader cannot go on to the next
-         section until the transition has landed — that is the whole of the
-         rule. Everything else stays free: the trip in is a normal glide, and
-         scrolling back up works at any moment, including mid-animation. An
-         earlier version swallowed every input from the instant the gesture
-         fired, which is why both steps felt dead. */
-      if (!settled()) { cool(false); return true }
-      return false                                  // landed — scroll on
+      if (idx === 0) { engage(1, false); return true }
+      /* THE ONLY WAIT. At EVIIVE the reader cannot go on to the next section
+         until the transition has landed - that is the entire rule. Everything
+         else stays free: the trip in is an ordinary glide and scrolling back up
+         works at any moment. */
+      if (!at(1)) return true
+      return false                                // landed - scroll on
     }
-    if (idx === 1) { cool(true); goto(0); return true }
-    return false                                    // at the first state, go up
+    if (idx === 1) { engage(0, false); return true }
+    return false                                  // first state - go on up
   }
 
-  /* Guarded. A throw in here does not surface as a broken animation - it
-     surfaces as nothing happening at all, because preventDefault is never
-     reached and the event simply passes through. `settled` was referenced
-     before it existed and every wheel event inside the section threw for hours
-     while looking merely unresponsive. If this ever throws again, the section
-     degrades to ordinary scrolling and says so once in the console. */
+  /* Guarded. A throw in here does not surface as a broken animation, it
+     surfaces as nothing happening at all: preventDefault is never reached and
+     the event simply passes through. Two undefined identifiers hid there for
+     hours exactly this way. */
   let told = false
-  const onWheel = (e) => {
-    if (Math.abs(e.deltaY) < 1) return
+  const fire = (dir, e) => {
     try {
-      if (onStep(e.deltaY > 0 ? 1 : -1)) e.preventDefault()
+      if (onStep(dir)) e.preventDefault()
     } catch (err) {
       if (!told) { told = true; console.error("[eviive] scroll controller:", err) }
     }
   }
-  const onTouchStart = (e) => { touchY = e.touches[0].clientY }
-  const onTouchMove = (e) => {
-    const dy = touchY - e.touches[0].clientY
-    if (Math.abs(dy) < 6) return
-    if (onStep(dy > 0 ? 1 : -1)) e.preventDefault()
+
+  const onWheel = (e) => {
+    const now = performance.now()
+    const quiet = now - lastInputAt
+    lastInputAt = now                    // advances for swallowed events too
+    if (busy) { e.preventDefault(); return }
+    if (Math.abs(e.deltaY) < 1) return
+    if (quiet > GESTURE_GAP) { armed = true; accum = 0 }
+    if (!armed) return                   // same gesture, already decided
+    accum += e.deltaY
+    if (Math.abs(accum) < TOLERANCE) return
+    armed = false                        // one gesture, one decision
+    fire(accum > 0 ? 1 : -1, e)
   }
+
+  const onTouchStart = (e) => {
+    touchY = e.touches[0].clientY
+    touchAcc = 0
+    armed = !busy
+  }
+  const onTouchMove = (e) => {
+    if (busy) { e.preventDefault(); return }
+    const y = e.touches[0].clientY
+    touchAcc += touchY - y
+    touchY = y
+    if (!armed || Math.abs(touchAcc) < 30) return
+    armed = false
+    fire(touchAcc > 0 ? 1 : -1, e)
+  }
+
   const KEYS = { ArrowDown: 1, PageDown: 1, " ": 1, ArrowUp: -1, PageUp: -1 }
   const onKey = (e) => {
     const d = KEYS[e.key]
-    if (d && onStep(d)) e.preventDefault()
+    if (!d) return
+    if (busy) { e.preventDefault(); return }
+    fire(d, e)
   }
 
-  addEventListener("scroll", sampleVel, { passive: true })
+  /* Re-arm the reveal once the section is completely gone below the fold, so
+     coming back to it plays rather than showing a finished composition. */
+  const onScroll = () => {
+    if (busy) return
+    if (pinEl.getBoundingClientRect().top < innerHeight) return
+    idx = null
+    const a = api()
+    if (a && a.seek && progress() !== 0) a.seek(0)
+  }
+
+  /* The controller is the only writer of progress. The driver also infers it
+     from scroll position, and two systems assigning one value on the same frame
+     is the whole of the jitter: scrollTo dispatches its scroll event
+     asynchronously, so the last one used to land after the guard had cleared
+     and restart the tween from wherever it had reached. */
+  window.__eviiveOwned = true
+  setTimeout(() => {
+    const a = api()
+    if (!a || !a.seek) return
+    if (zone() === "inside") {
+      idx = -pinEl.getBoundingClientRect().top > innerHeight / 2 ? 1 : 0
+      a.seek(idx === 1 ? 1 : 0.5)
+    } else a.seek(0)
+  }, 120)
+
+  addEventListener("scroll", onScroll, { passive: true })
   addEventListener("wheel", onWheel, { passive: false })
   addEventListener("touchstart", onTouchStart, { passive: true })
   addEventListener("touchmove", onTouchMove, { passive: false })
@@ -317,8 +345,10 @@ export default function mount(host) {
     ro.disconnect()
     removeEventListener("resize", syncVP)
     if (raf) cancelAnimationFrame(raf)
+    if (pollRaf) cancelAnimationFrame(pollRaf)
     clearTimeout(guardT)
-    removeEventListener("scroll", sampleVel)
+    window.__eviiveOwned = false
+    removeEventListener("scroll", onScroll)
     removeEventListener("wheel", onWheel)
     removeEventListener("touchstart", onTouchStart)
     removeEventListener("touchmove", onTouchMove)
