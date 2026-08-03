@@ -196,8 +196,14 @@ body{margin:0;background:var(--dark);font-family:"Inter",system-ui,sans-serif;
   /* 85% of the content column. 22ch was invented and resolved to the full
      column at phone width, so the title was effectively unconstrained. 85% is
      a value the project already uses at desktop. */
+  /* min(26ch, 85% column): ONE title measure everywhere. 26ch is the
+     desktop cap and lands at roughly half the frame on desktop and iPad -
+     Ocean's 50% rule expressed in type units so it scales with the font.
+     The 85% column term only binds on phones, where 26ch would overflow.
+     Without the 26ch term an iPad-wide column let the whole first phrase
+     run a single line across the frame. */
   .stacked .headline{left:var(--gutter);right:var(--gutter);top:var(--pad-t);
-            max-width:calc((100% - var(--gutter) * 2) * 0.85)}
+            max-width:min(26ch, calc((100% - var(--gutter) * 2) * 0.85))}
 
   /* 52, not 72 — the ticks only ever reach 27, so the extra 20px was empty
      container held above the figure and taken out of the orb's band. */
@@ -710,7 +716,15 @@ nearly 4 years longer</span>
          it rather than being held at a minimum size and punching through the
          timeline. */
       const colW = innerWidth - 2 * GUTTER
-      scroll.orbDia = Math.max(Math.min((bandBot - bandTop) * FILL, colW * 0.78), 0)
+      /* THE SAME GOVERNOR AS WIDE MODE: the resting EVIIVE body never exceeds
+         34% of the frame width, in any layout. The wide-mode governor shipped
+         first and stacked kept only its band and column caps - which is how
+         an iPad portrait still showed a body at over half the frame width
+         while desktop obeyed the rule. One constant, one meaning, every mode.
+         (orbDia IS the resting EVIIVE diameter here - the fit normalises
+         dot 2 to it, and dot 1 keeps the true 8.36x relation underneath.) */
+      scroll.orbDia = Math.max(
+        Math.min((bandBot - bandTop) * FILL, colW * 0.78, innerWidth * 0.34), 0)
       return
     }
     const foot = railEl.getBoundingClientRect().bottom
