@@ -398,9 +398,21 @@ function Orb() {
        way but capped at 1, so it can only ever SHRINK to clear the type — the
        natural size is what carries the true 8.36x ratio against dot 1. */
     const fitted = scroll.orbDia ? (scroll.orbDia * 6.4) / (2 * fpxV) : null
+    /* THE SIZE GOVERNOR (Ocean's "holistic strategy"). The natural size is
+       pure perspective, so it scales with viewport HEIGHT alone - which is
+       exactly why square-ish windows read as "the dot is too big": height
+       stays large while the width that frames it shrinks. The governor caps
+       the RESTING EVIIVE body at a fraction of the width and the whole
+       animation rides under the cap, so dot 1 keeps the true 8.36x relation.
+       Chosen against the signed-off 1512x900 reference, where the resting
+       body is ~34% of the width - at and beyond that aspect the governor is
+       exactly 1 and the reference composition is untouched. The stacked
+       branch is already width-aware through the band fit. */
+    const rest2 = 2 * ANG_B * fpxV                 // resting EVIIVE diameter, px
+    const governor = narrow ? 1 : Math.min(1, (innerWidth * 0.34) / rest2)
     const fit = narrow
       ? (fitted !== null ? fitted : 0.52)
-      : (fitted !== null ? Math.min(fitted, 1) : 1)
+      : Math.min(fitted !== null ? fitted : 1, governor)
     /* Dot 1 ARRIVES, it does not appear. The section holds at p = 0 through
        the whole approach, so that state is genuinely on screen - and a scale
        gate there made the body pop from nothing to full in a single frame the

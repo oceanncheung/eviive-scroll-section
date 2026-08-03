@@ -209,6 +209,29 @@ rules were:
    in motion (engaged/spent guard) — throttled-tab intervals can fire seconds
    after load.
 
+## THE ORB SIZE GOVERNOR
+
+The natural size is pure perspective and therefore scales with viewport
+HEIGHT alone - the answer to "are we scaling horizontally, vertically, or by
+area" was "vertically only", which is exactly why square-ish windows read as
+"the dot is too big" (height stays large while the framing width shrinks).
+The governor caps the RESTING EVIIVE body at 34% of the width; the whole
+animation rides under the cap so dot 1 keeps the true 8.36x relation; at the
+signed-off 1512x900 reference the governor is exactly 1 (resting body 408px,
+cap 514px) and the reference is untouched. Stacked stays band+column-fitted.
+Measured at 1140x980: governor 0.87. The 0.34 is THE knob for square-ish
+taste.
+
+## THE DOM IS OWNED
+
+Teardown wiped host.innerHTML unconditionally. When a stale instance's
+cleanup ran AFTER a soft-refresh remount - the same reversed effect ordering
+as the cross-instance driver murder - it deleted the NEW instance's markup:
+text gone, a surviving canvas showing only the dot, controller holding
+detached elements, unresponsive to everything. host.dataset.eviiveInst marks
+the owner; a cleanup that finds another owner removes only its own
+unambiguous nodes (hint, style, driver) and leaves the living DOM alone.
+
 ## Working now
 
 - Section on the homepage, opens on 6.4 months
