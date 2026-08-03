@@ -413,6 +413,13 @@ function Orb() {
     const fit = narrow
       ? (fitted !== null ? fitted : 0.52)
       : Math.min(fitted !== null ? fitted : 1, governor)
+    /* Published for the rail's labels: each sentence balances against ITS
+       body's RESTING screen radius - resting, not live, because tracking the
+       live edge made the label drift sideways during the morph; and the
+       resting size must include fit and governor, or the label centres
+       against a phantom orb the viewer cannot see. */
+    scroll.orbPxRestA = fit * fpxV * (R_A / 6.4)
+    scroll.orbPxRestB = fit * fpxV * (1 / 6.4)
     /* Dot 1 ARRIVES, it does not appear. The section holds at p = 0 through
        the whole approach, so that state is genuinely on screen - and a scale
        gate there made the body pop from nothing to full in a single frame the

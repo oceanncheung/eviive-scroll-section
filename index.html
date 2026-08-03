@@ -878,8 +878,12 @@ nearly 4 years longer</span>
     /* Measured against the orb at its RESTING size, not its live size. Tracking
        the live edge made the label drift sideways while it descended — it has
        to fall straight down. */
-    const orbRight = innerWidth * (scroll.orbX || 0.5) + fpx / 6.4
     const railX = innerWidth - GUTTER - 30                 // left edge of the ticks
+    /* Each sentence balances against what the eye actually sees: ITS body's
+       resting edge (fit and governor included - the raw fpx/6.4 was dot 2's
+       untouched size, used for both labels, so the gaps never matched the
+       screen) and the TICK FIELD's inner edge rather than the rail line. */
+    const crown = (RAIL_W + RAIL_BUMP) * (scroll.railK || 1)
 
     /* ONE ramp drives both labels. Two separate windows — out over 0.54-0.74,
        in over 0.62-0.86 — put a lag between them, so the pair read as one
@@ -904,17 +908,21 @@ nearly 4 years longer</span>
       liveMarks.push({ m: mk.m, o })   // crossfades with its grid tick below
 
       const textW = markW[i] || 1
-      const pad = Math.max((railX - orbRight - textW) / 2, 40)
-      /* The chain's floor: never shorter than the tallest tick plus the gap,
-         whatever the width - the crown-breathing ride sits on top of it. */
-      const rm = scroll.reachMin || (RAIL_W + RAIL_BUMP + LEAD_GAP + 8)
-      /* The leader is the longest tick on the rail, so it obeys the same hill:
-         full reach at the crown, drawing back toward the rail as it travels
-         away from it. The sentence rides the line rather than sitting at a
-         fixed column. Transforms only — see the note on .rail. */
-      const reach = rm + Math.max(0, pad - rm) * (0.52 + 0.48 * hill(y, H))
+      /* BALANCED BY CONSTRUCTION (Ocean: "closer to the orb than to the
+         timeline"). Each label centres between its own body's resting edge
+         and the tick field: gap-to-orb equals gap-to-ticks at the crown -
+         where the resting label actually sits - with a subtle breath away
+         from it. The old maths centred dot 2's untouched size against the
+         rail LINE, so the visual gaps could never match. The leader still
+         never dips under the tallest tick. Resting, not live: tracking the
+         live edge made the label drift sideways while it descended. */
+      const orbRight = innerWidth * (scroll.orbX || 0.5) +
+        ((i === 0 ? scroll.orbPxRestA : scroll.orbPxRestB) || fpx / 6.4)
+      const avail = (railX - crown) - orbRight
+      const pad = Math.max((avail - textW) / 2, 24)
+      const reach = crown + pad * (0.80 + 0.20 * hill(y, H))
       const lineLen = HZ() ? (RAIL_W_H + RAIL_BUMP_H) + 10 + MARK_SPAN_H * hill(y, H)
-                           : Math.max(reach - LEAD_GAP, (RAIL_W + RAIL_BUMP) * (scroll.railK || 1) + 6)
+                           : Math.max(reach - LEAD_GAP, crown + 6)
       if (HZ()){
         e.style.transform = `translate3d(${y.toFixed(1)}px,0,0)`
         e.firstElementChild.style.transform = `scaleY(${(lineLen / 220).toFixed(4)})`
