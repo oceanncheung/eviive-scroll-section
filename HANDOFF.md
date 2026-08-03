@@ -179,6 +179,36 @@ this repeatedly and is, reasonably, out of patience with it. If you cannot see i
 say so. Asking for a screenshot or a console error is far cheaper than a wrong
 guess.
 
+## THE BREAKPOINT CONTRACT — exactly two layouts, four rules
+
+WIDE (vertical rail, right) ⇔ `aspect >= 1.15 && width >= 900`; STACKED
+(horizontal rail, bottom) otherwise. The mapping was never the bug; these
+rules were:
+
+1. **All layout measurement is scroll-invariant.** The stacked band is
+   stage-relative (subtracts the sticky's live top). It used raw viewport
+   rects, so measured with the page above the section it placed the orb at
+   orbY 1.972 — two viewports below the screen. That was "the dot is gone on
+   tablet", and it self-healed only when a resize re-measured with the section
+   in view, which was the "stretch to desktop and back" ritual.
+2. **The rail furniture is one ordered chain, and the orb yields to the
+   chain.** Ticks scale with width (railK = clamp((W-900)/612, .55, 1)); the
+   label leader's floor is crown + LEAD_GAP + 8, so it is ALWAYS longer than
+   the tallest tick (Ocean's invariant); the sentence sits beyond the leader;
+   capR derives from the same chain. Verified at 1138: tick 35, leader 43,
+   sentence 30px clear. Both orientations obey the floor.
+3. **Title colour belongs to the rendered line.** Stacked flows the three
+   spans as one paragraph (l1a keeps its absolute overlay) and paintTitleLines
+   buckets words by row, painting any row holding a title word ink and payoff
+   rows accent — "stay" is dark exactly when it shares patients' line.
+   The paint MUST run inside alignUnit's show-measure-restore window: at
+   p < 0.5 the spans are display:none and every offsetTop reads 0. Classes
+   pI/pA ride the same vars setInk animates. Wide clears the paint.
+4. **Degenerate viewports measure nothing** (alignUnit returns under
+   innerHeight 100), and a LATE init success never stomps a session already
+   in motion (engaged/spent guard) — throttled-tab intervals can fire seconds
+   after load.
+
 ## Working now
 
 - Section on the homepage, opens on 6.4 months

@@ -225,6 +225,19 @@ body{margin:0;background:var(--dark);font-family:"Inter",system-ui,sans-serif;
 /* Bottom padding matches the SIDE padding when stacked. At 96 the foot of the
    page carried three times the inset of its own margins. */
 .stacked{--pad-b:24px}
+/* THE TITLE FOLLOWS THE LINE, NOT THE SENTENCE (stacked only). On a narrow
+   column the three spans flow as ONE paragraph and wrap wherever they must;
+   a paint pass in alignUnit then colours each RENDERED line by membership -
+   any line holding a title word is ink, payoff-only lines are accent. "stay"
+   is dark exactly when it lands beside "patients", at every width, with no
+   per-breakpoint tables. Colours ride the same vars setInk animates, so the
+   scene transition keeps owning them. #l1a keeps its absolute overlay. */
+.stacked .headline .ln{display:inline;white-space:normal}
+.stacked .headline #l1a{display:block}
+.stacked #l1b::after{content:" "}
+.stacked .headline{text-wrap:pretty}
+.headline .wd.pI{color:var(--ink)}
+.headline .wd.pA{color:var(--accent)}
 @media (max-width:809px){:root{--rail-y:54%; --readout-y:66%}}
 
 @media (max-width:1199px){:root{
@@ -529,7 +542,29 @@ nearly 4 years longer</span>
     return d
   }
 
+  const stickyEl = document.querySelector(".sticky")
+  /* Colour follows the rendered line. Buckets the title's word spans by row
+     and paints whole rows - runs after any relayout in stacked; wide clears. */
+  function paintTitleLines(){
+    const wds = [...l1b.querySelectorAll(".wd"), ...line2.querySelectorAll(".wd")]
+    if (!wds.length) return
+    if (!HZ()){ wds.forEach(w => w.classList.remove("pI", "pA")); return }
+    const rows = new Map()
+    wds.forEach(w => {
+      const key = Math.round(w.offsetTop / 8)
+      if (!rows.has(key)) rows.set(key, [])
+      rows.get(key).push(w)
+    })
+    rows.forEach(list => {
+      const ink = list.some(w => w.parentElement === l1b)
+      list.forEach(w => { w.classList.toggle("pI", ink); w.classList.toggle("pA", !ink) })
+    })
+  }
   function alignUnit(){
+    /* A zero-height viewport measures nothing true - see the invariant tick's
+       guard for the incident this prevents. seenVP re-runs this when the
+       viewport becomes real. */
+    if (innerHeight < 100) return;
     seenVP.w = innerWidth; seenVP.h = innerHeight
     /* ONE source of truth for the layout mode. The scene used to run its own
        innerWidth test, which disagreed with this one the moment the rule
@@ -649,10 +684,23 @@ nearly 4 years longer</span>
       const wasD = [l1a, l1b, line2].map(e => e.style.display)
       l1a.style.display = "none"; l1b.style.display = ""; line2.style.display = ""
       const titleBottom = hEl.getBoundingClientRect().bottom
+      /* Paint INSIDE the show-measure-restore window: at p < 0.5 these spans
+         are display:none and every offsetTop reads 0 - one bucket, garbage
+         paint. Here they have real layout for a frame. */
+      paintTitleLines()
       ;[l1a, l1b, line2].forEach((e, i) => { e.style.display = wasD[i] })
 
-      const bandTop = titleBottom + BREATHE
-      const bandBot = rg2.top - RESERVE
+      /* STAGE-RELATIVE, like everything else. These were raw viewport rects,
+         so when this ran with the page scrolled ABOVE the section the whole
+         band landed a viewport or two below the screen - measured live on a
+         fresh tablet load: orbY 1.972, the orb exiled to 197% of the frame,
+         which read as "the dot is gone" and self-healed only when a resize
+         happened to re-measure with the section in view (stretch to desktop
+         and back). The desktop branch was cured of this class long ago; this
+         is the same cure. */
+      const stTop = stickyEl ? stickyEl.getBoundingClientRect().top : 0
+      const bandTop = (titleBottom - stTop) + BREATHE
+      const bandBot = (rg2.top - stTop) - RESERVE
       scroll.orbY   = ((bandTop + bandBot) / 2) / innerHeight
       /* Capped against the COLUMN as well as the band. With the caption out of
          the stack the band grows a lot, and an orb sized purely from it would
@@ -706,6 +754,17 @@ nearly 4 years longer</span>
     }
     const railX = innerWidth - GUTTER - 30
     const labelW = Math.max(markW[0] || 0, markW[1] || 0) || 200
+    paintTitleLines()                                   // wide: clears the paint
+    /* ONE ORDERED CHAIN owns the right-hand furniture: rail line, ticks
+       (crown scales with width), leader, sentence - and the orb yields to the
+       chain's total, not to the sentence alone. The invariant Ocean asked for
+       falls out by construction: the leader's minimum exceeds the tallest
+       tick, so the sentence can never sit inside the tick field - at 1512 it
+       breathes, at 1138 it clears, at every width between it is ordered. */
+    const railK = Math.max(0.55, Math.min(1, (innerWidth - 900) / 612))
+    scroll.railK = railK
+    const crown = Math.round((RAIL_W + RAIL_BUMP) * railK)
+    scroll.reachMin = crown + LEAD_GAP + 8
     /* INTERVENE ONLY ON A COLLISION. The gap is not centred on the viewport —
        the headline holds the left, the rail and its label the right — but that
        only matters when the body would actually run into something. Recentring
@@ -738,7 +797,7 @@ nearly 4 years longer</span>
     const dy    = Math.max(0, orbCy - hl.bottom)   // headline is above the orb
     const A     = cxV - (hl.right - 4)
     const capL  = A >= 0 ? Math.sqrt(A * A + dy * dy) : dy
-    const capR  = (railX - labelW) - cxV
+    const capR  = (railX - scroll.reachMin - labelW - 16) - cxV
     /* No vertical cap. The old one squeezed the orb into the gap between the
        headline and the readout, which only made sense while it was being moved
        sideways into a column. Centred, it never competes with either: the
@@ -846,13 +905,16 @@ nearly 4 years longer</span>
 
       const textW = markW[i] || 1
       const pad = Math.max((railX - orbRight - textW) / 2, 40)
+      /* The chain's floor: never shorter than the tallest tick plus the gap,
+         whatever the width - the crown-breathing ride sits on top of it. */
+      const rm = scroll.reachMin || (RAIL_W + RAIL_BUMP + LEAD_GAP + 8)
       /* The leader is the longest tick on the rail, so it obeys the same hill:
          full reach at the crown, drawing back toward the rail as it travels
          away from it. The sentence rides the line rather than sitting at a
          fixed column. Transforms only — see the note on .rail. */
-      const reach = 30 + pad * (0.52 + 0.48 * hill(y, H))
-      const lineLen = HZ() ? MARK_MIN_H + MARK_SPAN_H * hill(y, H)
-                           : Math.max(reach - LEAD_GAP, 24)
+      const reach = rm + Math.max(0, pad - rm) * (0.52 + 0.48 * hill(y, H))
+      const lineLen = HZ() ? (RAIL_W_H + RAIL_BUMP_H) + 10 + MARK_SPAN_H * hill(y, H)
+                           : Math.max(reach - LEAD_GAP, (RAIL_W + RAIL_BUMP) * (scroll.railK || 1) + 6)
       if (HZ()){
         e.style.transform = `translate3d(${y.toFixed(1)}px,0,0)`
         e.firstElementChild.style.transform = `scaleY(${(lineLen / 220).toFixed(4)})`
@@ -892,7 +954,7 @@ nearly 4 years longer</span>
       if (t._on !== 1){ t.style.display = "block"; t._on = 1 }
       const ty = Math.round(y * 10) / 10
       const tw = Math.round(HZ() ? RAIL_W_H + RAIL_BUMP_H * hill(y, H)
-                                 : RAIL_W   + RAIL_BUMP   * hill(y, H))
+                                 : (RAIL_W  + RAIL_BUMP   * hill(y, H)) * (scroll.railK || 1))
       if (t._y !== ty || t._w !== tw){
         t.style.transform = HZ()
           ? `translate3d(${ty}px,0,0) scaleY(${(tw / 64).toFixed(4)})`
