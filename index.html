@@ -231,19 +231,17 @@ body{margin:0;background:var(--dark);font-family:"Inter",system-ui,sans-serif;
 /* Bottom padding matches the SIDE padding when stacked. At 96 the foot of the
    page carried three times the inset of its own margins. */
 .stacked{--pad-b:24px}
-/* THE TITLE FOLLOWS THE LINE, NOT THE SENTENCE (stacked only). On a narrow
-   column the three spans flow as ONE paragraph and wrap wherever they must;
-   a paint pass in alignUnit then colours each RENDERED line by membership -
-   any line holding a title word is ink, payoff-only lines are accent. "stay"
-   is dark exactly when it lands beside "patients", at every width, with no
-   per-breakpoint tables. Colours ride the same vars setInk animates, so the
-   scene transition keeps owning them. #l1a keeps its absolute overlay. */
-.stacked .headline .ln{display:inline;white-space:normal}
-.stacked .headline #l1a{display:block}
-.stacked #l1b::after{content:" "}
-.stacked .headline{text-wrap:pretty}
-.headline .wd.pI{color:var(--ink)}
-.headline .wd.pA{color:var(--accent)}
+/* THE TITLE IS THREE ATOMIC SEMANTIC GROUPS - "Therapy-aligned patients" /
+   "stay progression-free" / "nearly 4 years longer" - each owning its line at
+   every width and wrapping only WITHIN itself on true phones, colour per
+   group. An earlier system flowed the spans as one paragraph and painted each
+   rendered line by membership ("stay" went dark when it landed beside
+   "patients"); Ocean saw its consequence at 1138x1035 - a dangling verb and
+   an orphaned "progression-free" - and called it. Free wrap makes breaks a
+   function of width; semantic groups make them a function of MEANING, which
+   is the only version that reads designed at every size. balance keeps any
+   internal phone wrap even. */
+.headline .ln{text-wrap:balance}
 @media (max-width:809px){:root{--rail-y:54%; --readout-y:66%}}
 
 @media (max-width:1199px){:root{
@@ -549,23 +547,6 @@ nearly 4 years longer</span>
   }
 
   const stickyEl = document.querySelector(".sticky")
-  /* Colour follows the rendered line. Buckets the title's word spans by row
-     and paints whole rows - runs after any relayout in stacked; wide clears. */
-  function paintTitleLines(){
-    const wds = [...l1b.querySelectorAll(".wd"), ...line2.querySelectorAll(".wd")]
-    if (!wds.length) return
-    if (!HZ()){ wds.forEach(w => w.classList.remove("pI", "pA")); return }
-    const rows = new Map()
-    wds.forEach(w => {
-      const key = Math.round(w.offsetTop / 8)
-      if (!rows.has(key)) rows.set(key, [])
-      rows.get(key).push(w)
-    })
-    rows.forEach(list => {
-      const ink = list.some(w => w.parentElement === l1b)
-      list.forEach(w => { w.classList.toggle("pI", ink); w.classList.toggle("pA", !ink) })
-    })
-  }
   function alignUnit(){
     /* A zero-height viewport measures nothing true - see the invariant tick's
        guard for the incident this prevents. seenVP re-runs this when the
@@ -690,10 +671,6 @@ nearly 4 years longer</span>
       const wasD = [l1a, l1b, line2].map(e => e.style.display)
       l1a.style.display = "none"; l1b.style.display = ""; line2.style.display = ""
       const titleBottom = hEl.getBoundingClientRect().bottom
-      /* Paint INSIDE the show-measure-restore window: at p < 0.5 these spans
-         are display:none and every offsetTop reads 0 - one bucket, garbage
-         paint. Here they have real layout for a frame. */
-      paintTitleLines()
       ;[l1a, l1b, line2].forEach((e, i) => { e.style.display = wasD[i] })
 
       /* STAGE-RELATIVE, like everything else. These were raw viewport rects,
@@ -768,7 +745,6 @@ nearly 4 years longer</span>
     }
     const railX = innerWidth - GUTTER - 30
     const labelW = Math.max(markW[0] || 0, markW[1] || 0) || 200
-    paintTitleLines()                                   // wide: clears the paint
     /* ONE ORDERED CHAIN owns the right-hand furniture: rail line, ticks
        (crown scales with width), leader, sentence - and the orb yields to the
        chain's total, not to the sentence alone. The invariant Ocean asked for
