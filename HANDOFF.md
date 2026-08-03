@@ -197,13 +197,17 @@ rules were:
    the tallest tick (Ocean's invariant); the sentence sits beyond the leader;
    capR derives from the same chain. Verified at 1138: tick 35, leader 43,
    sentence 30px clear. Both orientations obey the floor.
-3. **Title colour belongs to the rendered line.** Stacked flows the three
-   spans as one paragraph (l1a keeps its absolute overlay) and paintTitleLines
-   buckets words by row, painting any row holding a title word ink and payoff
-   rows accent — "stay" is dark exactly when it shares patients' line.
-   The paint MUST run inside alignUnit's show-measure-restore window: at
-   p < 0.5 the spans are display:none and every offsetTop reads 0. Classes
-   pI/pA ride the same vars setInk animates. Wide clears the paint.
+3. **THE TITLE'S DYNAMIC RULE: breaks are a function of MEANING; width only
+   decides whether a group wraps within itself.** Three atomic semantic groups
+   - "Therapy-aligned patients" / "stay progression-free" / "nearly 4 years
+   longer" - each owns its line at every width (measure min(26ch, 85% col)),
+   wrapping only INTERNALLY on true phones, coloured per group,
+   text-wrap:balance for even internal wraps. This retired the earlier
+   line-membership paint system: free-flowing the spans made breaks a function
+   of width, and at 1138x1035 that produced a dangling verb and an orphaned
+   "progression-free", which Ocean rejected on sight. Do not resurrect
+   cross-group joining ("stay" onto patients' line) - it was built at Ocean's
+   own request and rejected on its consequences.
 4. **Degenerate viewports measure nothing** (alignUnit returns under
    innerHeight 100), and a LATE init success never stomps a session already
    in motion (engaged/spent guard) — throttled-tab intervals can fire seconds
