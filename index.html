@@ -1258,6 +1258,10 @@ nearly 4 years longer</span>
        lives on. */
     requestAnimationFrame(frame);
     try{
+    /* Heartbeat. The controller cannot tell a live loop from a dead one by
+       reading p - a dead loop and a settled tween look identical. The tick
+       only ever advances from in here, so its silence IS the diagnosis. */
+    window.__eviiveTick = (window.__eviiveTick|0) + 1;
     scroll.p = reduced ? target : from + (target-from)*EASE(clamp((now-t0)/DUR,0,1));
     const p = scroll.p;
 

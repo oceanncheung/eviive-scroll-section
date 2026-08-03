@@ -142,7 +142,20 @@ confirming them.** Three traps, all real, all hit repeatedly:
    tolerates a missing driver; the healer then re-issues until it arrives, so
    the pair survives any driver arrival time. NOTE for harness work: a hidden
    Browser pane runs no rAF - tweens freeze and tests lie. Keep the pane
-   visible or distrust the numbers.
+   visible or distrust the numbers. Two more members of the class, found by
+   deep audit: (1) THE CROSS-INSTANCE MURDER - teardown called the GLOBAL
+   window.__eviiveStop, which always points at the CURRENT driver, so a
+   cleanup running after the next mount (Framer double-invokes effects,
+   ordering not guaranteed) killed the LIVE driver: p froze, dark board,
+   healer re-issuing into a corpse. Stops and ownership are now scoped to the
+   instance that created them (`myStop` token compare, `ownerTok`). (2) THE
+   DRIVER HEARTBEAT - frame() bumps window.__eviiveTick; if it goes silent
+   1.2s while the section is visible in a visible, real-sized viewport, the
+   driver is re-injected ("[eviive] driver heartbeat lost - reinjecting") and
+   state restored. The init one-shot became a 150ms retry (cold esm.sh loads
+   beat 120ms routinely). And geometry invariants no-op below innerHeight 100:
+   a zero-height viewport makes "fully inside" trivially true and once adopted
+   a section that was nowhere near the screen.
 
 4. **A throw in the wheel handler looks like nothing at all.** If `onWheel`
    raises before `preventDefault()`, the event simply passes through and the
